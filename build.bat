@@ -42,6 +42,7 @@ if not "%UPX_DIR%"=="" (
     --add-data "app/models.py;app" ^
     --add-data "app/auth_helper.py;app" ^
     --add-data "app/update_helper.py;app" ^
+    --add-data "app/printer_helper.py;app" ^
     --add-data "app/routes;app/routes" ^
     --add-data "config.py;." ^
     --add-data ".env;." ^
@@ -51,6 +52,8 @@ if not "%UPX_DIR%"=="" (
     --hidden-import sqlalchemy ^
     --hidden-import pymysql ^
     --hidden-import cryptography ^
+    --hidden-import serial ^
+    --hidden-import serial.tools.list_ports ^
     --collect-all PyQt5 ^
     --collect-all PyQtWebEngine ^
     desktop_app.py

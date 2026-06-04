@@ -6,3 +6,4 @@ PyQt5==5.15.11
 PyQtWebEngine==5.15.7
 python-dotenv==1.0.0
 Werkzeug==3.0.1
+pyserial==3.5

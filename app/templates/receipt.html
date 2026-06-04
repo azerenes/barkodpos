@@ -69,6 +69,7 @@
 
         <div class="text-center mt-3">
             <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Yazdır</button>
+            <button class="btn btn-dark" onclick="printThermal()"><i class="bi bi-receipt"></i> Termal</button>
             <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal"><i class="bi bi-envelope"></i> E-posta</button>
             <a href="{{ url_for('pos.pos') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> POS</a>
         </div>
@@ -94,6 +95,23 @@
 <script src="{{ url_for('static', filename='lib/qrcode.min.js') }}"></script>
 <script>
 new QRCode(document.getElementById('qrcode'), { text: '{{ host }}{{ url_for("receipt.view_receipt", sale_id=sale.id) }}', width: 80, height: 80 });
+
+function printThermal() {
+    var btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    fetch('{{ url_for("receipt.print_receipt", sale_id=sale.id) }}', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                alert('Fiş yazıcıya gönderildi!');
+            } else {
+                alert('Hata: ' + (d.error || 'Bilinmeyen hata'));
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-receipt"></i> Termal';
+        });
+}
 </script>
 
 <style>

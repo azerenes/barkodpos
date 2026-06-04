@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Sale, SaleItem, Setting
 from app import db
@@ -12,6 +12,13 @@ def view_receipt(sale_id):
     items = SaleItem.query.filter_by(sale_id=sale.id).all()
     host = request.host_url.rstrip('/')
     return render_template('receipt.html', sale=sale, items=items, host=host)
+
+@receipt_bp.route('/print/<int:sale_id>', methods=['POST'])
+@login_required
+def print_receipt(sale_id):
+    from app.printer_helper import print_receipt as do_print
+    result = do_print(sale_id)
+    return jsonify(result)
 
 @receipt_bp.route('/send-email/<int:sale_id>', methods=['POST'])
 @login_required

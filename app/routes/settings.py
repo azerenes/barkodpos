@@ -40,6 +40,8 @@ def index():
         smtp_pass=get_setting('smtp_pass', ''),
         smtp_tls=get_setting('smtp_tls', '1'),
         from_email=get_setting('from_email', ''),
+        printer_type=get_setting('printer_type', 'none'),
+        printer_address=get_setting('printer_address', ''),
         github_repo=f'{GITHUB_OWNER}/{GITHUB_REPO}',
         current_version=CURRENT_VERSION)
 
@@ -65,6 +67,8 @@ def save():
         set_setting('smtp_pass', request.form.get('smtp_pass', ''))
         set_setting('smtp_tls', request.form.get('smtp_tls', '1'))
         set_setting('from_email', request.form.get('from_email', ''))
+        set_setting('printer_type', request.form.get('printer_type', 'none'))
+        set_setting('printer_address', request.form.get('printer_address', ''))
         db.session.commit()
         flash('Ayarlar kaydedildi', 'success')
     except Exception as e:

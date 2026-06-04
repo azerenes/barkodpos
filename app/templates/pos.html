@@ -341,8 +341,11 @@ function completeSale() {
     .then(r => r.json())
     .then(result => {
                         if (result.success) {
-                            if (confirm(`Satış tamamlandı!\nFiş: ${result.receipt_no}\nTutar: ${result.grand_total.toFixed(2)} ₺\n\nFiş yazdırmak ister misiniz?`)) {
+                            var choice = confirm(`Satış tamamlandı!\nFiş: ${result.receipt_no}\nTutar: ${result.grand_total.toFixed(2)} ₺\n\nFiş sayfasını açmak için Tamam,\nTermal yazıcıya yazdırmak için İptal'e tıklayın.`);
+                            if (choice) {
                                 window.open(`/receipt/${result.sale_id}`, '_blank');
+                            } else {
+                                fetch('/receipt/print/' + result.sale_id, { method: 'POST' });
                             }
                             clearCart();
                         } else {

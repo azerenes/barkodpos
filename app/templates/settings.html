@@ -113,6 +113,32 @@
         </div>
 
         <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-printer"></i> Termal Yazıcı (ESC/POS)</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings.save') }}">
+                    <div class="mb-2">
+                        <label>Yazıcı Türü</label>
+                        <select name="printer_type" class="form-select">
+                            <option value="none" {{ 'selected' if printer_type == 'none' }}>Kullanılmıyor</option>
+                            <option value="serial" {{ 'selected' if printer_type == 'serial' }}>Seri Port (COM)</option>
+                            <option value="tcp" {{ 'selected' if printer_type == 'tcp' }}>Ağ Yazıcısı (TCP/IP)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Adres</label>
+                        <input type="text" name="printer_address" class="form-control" value="{{ printer_address }}"
+                               placeholder="COM1 veya 192.168.1.100:9100">
+                        <div class="form-text small text-muted">
+                            Seri port için: <code>COM1</code>, <code>COM2</code> ...<br>
+                            Ağ yazıcısı için: <code>IP:PORT</code> (örn: <code>192.168.1.100:9100</code>)
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-save"></i> Kaydet</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
             <div class="card-header"><i class="bi bi-arrow-repeat"></i> Güncelleme</div>
             <div class="card-body">
                 <p class="text-muted" id="updateStatus">Sürüm kontrolü yapılıyor...</p>
