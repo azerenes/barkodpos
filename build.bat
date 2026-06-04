@@ -44,8 +44,6 @@ if not "%UPX_DIR%"=="" (
     --add-data "app/update_helper.py;app" ^
     --add-data "app/printer_helper.py;app" ^
     --add-data "app/routes;app/routes" ^
-    --add-data "app/templates/stock_count.html;app/templates" ^
-    --add-data "app/templates/stock_count_detail.html;app/templates" ^
     --add-data "config.py;." ^
     --add-data ".env;." ^
     --add-data "updater.bat;." ^

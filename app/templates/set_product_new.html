@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-plus-lg"></i> Yeni Set Ürün</h4>
+    <a href="{{ url_for('stock.set_products') }}" class="btn btn-outline-secondary">Geri</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                    <label>Set Adı</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label>Barkod (boş = otomatik)</label>
+                    <input type="text" name="barcode" class="form-control" placeholder="SET-...">
+                </div>
+                <div class="col-md-2">
+                    <label>Satış Fiyatı</label>
+                    <input type="number" name="sale_price" class="form-control" step="0.01" min="0.01" required>
+                </div>
+                <div class="col-md-2">
+                    <label>KDV %</label>
+                    <input type="number" name="tax_rate" class="form-control" value="0" step="0.1">
+                </div>
+                <div class="col-md-1">
+                    <label>Kategori</label>
+                    <select name="category_id" class="form-select">
+                        <option value="">-</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="fw-bold">İçindekiler</label>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addComponent()"><i class="bi bi-plus"></i> Bileşen Ekle</button>
+            </div>
+            <table class="table table-sm" id="compTable">
+                <thead><tr><th>Ürün</th><th>Miktar</th><th></th></tr></thead>
+                <tbody id="compBody">
+                    <tr>
+                        <td>
+                            <select name="component_id[]" class="form-select form-select-sm" required>
+                                <option value="">- Seçin -</option>
+                                {% for p in products %}
+                                <option value="{{ p.id }}" data-price="{{ p.purchase_price }}">{{ p.name }} ({{ p.barcode }})</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="number" name="component_qty[]" class="form-control form-control-sm" value="1" min="0.01" step="0.01"></td>
+                        <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('stock.set_products') }}" class="btn btn-outline-secondary">İptal</a>
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Oluştur</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function addComponent() {
+    var tbody = document.getElementById('compBody');
+    var row = document.createElement('tr');
+    row.innerHTML = `<td><select name="component_id[]" class="form-select form-select-sm" required>
+        <option value="">- Seçin -</option>
+        {% for p in products %}
+        <option value="{{ p.id }}">{{ p.name }} ({{ p.barcode }})</option>
+        {% endfor %}
+    </select></td>
+    <td><input type="number" name="component_qty[]" class="form-control form-control-sm" value="1" min="0.01" step="0.01"></td>
+    <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>`;
+    tbody.appendChild(row);
+}
+</script>
+{% endblock %}

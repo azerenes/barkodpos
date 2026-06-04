@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-safe"></i> Kasa Detay #{{ reg.id }}</h4>
+    <a href="{{ url_for('cashreg.index') }}" class="btn btn-outline-secondary">Geri</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-sm">
+            <tr><td>Açılış Tarihi</td><td>{{ reg.opened_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+            <tr><td>Kapanış Tarihi</td><td>{{ reg.closed_at.strftime('%d.%m.%Y %H:%M') if reg.closed_at else '-' }}</td></tr>
+            <tr><td>Kullanıcı</td><td>{{ reg.user.full_name if reg.user else '-' }}</td></tr>
+            <tr><td>Açılış Bakiyesi</td><td>{{ reg.opening_balance }} ₺</td></tr>
+            <tr><td>Beklenen Bakiye</td><td>{{ reg.expected_balance }} ₺</td></tr>
+            <tr><td>Kapanış Bakiyesi</td><td>{{ reg.closing_balance }} ₺</td></tr>
+            <tr><td>Fark</td><td class="fw-bold {% if reg.difference > 0 %}text-success{% elif reg.difference < 0 %}text-danger{% endif %}">{{ reg.difference }} ₺</td></tr>
+            <tr><td>Not</td><td>{{ reg.notes or '-' }}</td></tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

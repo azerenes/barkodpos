@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-journal-text"></i> Hesap Ekstresi: {{ customer.name }}</h4>
+    <div>
+        <span class="badge bg-info fs-6 me-2">Bakiye: {{ customer.balance }} ₺</span>
+        <a href="{{ url_for('customer.customer_detail', id=customer.id) }}" class="btn btn-outline-secondary">Geri</a>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="input-group mb-2">
+            <input type="text" id="searchMov" class="form-control" placeholder="Ara..." oninput="filterMovements()">
+            <select id="filterType" class="form-select" style="max-width:150px" onchange="filterMovements()">
+                <option value="">Tümü</option>
+                <option value="satis">Satış</option>
+                <option value="tahsilat">Tahsilat</option>
+                <option value="odeme">Ödeme</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Tarih</th><th>İşlem</th><th>Açıklama</th><th>Borç</th><th>Alacak</th><th>Bakiye</th></tr></thead>
+            <tbody id="movBody">
+                {% for s in sales %}
+                <tr class="mov-row" data-type="satis">
+                    <td><small>{{ s.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                    <td><span class="badge bg-primary">Satış</span></td>
+                    <td><small>#{{ s.receipt_no }}</small></td>
+                    <td class="text-danger fw-bold">{{ s.grand_total }} ₺</td>
+                    <td>-</td>
+                    <td class="fw-bold">-</td>
+                </tr>
+                {% endfor %}
+                {% for p in payments %}
+                <tr class="mov-row" data-type="{{ 'tahsilat' if p.type == 'collection' else 'odeme' }}">
+                    <td><small>{{ p.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                    <td><span class="badge bg-{{ 'success' if p.type == 'collection' else 'warning' }}">{{ 'Tahsilat' if p.type == 'collection' else 'Ödeme' }}</span></td>
+                    <td><small>{{ p.description or '-' }}</small></td>
+                    <td>{{ p.amount if p.type == 'collection' else '-' }} ₺</td>
+                    <td>{{ p.amount if p.type == 'payment' else '-' }} ₺</td>
+                    <td class="fw-bold">-</td>
+                </tr>
+                {% endfor %}
+                {% if not sales and not payments %}
+                <tr><td colspan="6" class="text-center text-muted py-3">Hareket bulunamadı</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function filterMovements() {
+    var q = document.getElementById('searchMov').value.toLowerCase();
+    var t = document.getElementById('filterType').value;
+    document.querySelectorAll('.mov-row').forEach(function(r) {
+        var show = true;
+        if (t && r.dataset.type !== t) show = false;
+        if (q && !r.textContent.toLowerCase().includes(q)) show = false;
+        r.style.display = show ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

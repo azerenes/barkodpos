@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Customer, Payment, Sale
 from app import db
@@ -94,3 +94,47 @@ def add_payment(id):
         flash(f'İşlem hatası: {str(e)}', 'error')
 
     return redirect(url_for('customer.customer_detail', id=customer.id))
+
+@customer_bp.route('/extract/<int:id>')
+@login_required
+def extract(id):
+    customer = Customer.query.get_or_404(id)
+    sales = Sale.query.filter_by(customer_id=id, status='completed').order_by(Sale.created_at.desc()).all()
+    payments = Payment.query.filter_by(customer_id=id).order_by(Payment.created_at.desc()).all()
+    return render_template('customer_extract.html', customer=customer, sales=sales, payments=payments)
+
+@customer_bp.route('/extract/<int:id>/json')
+@login_required
+def extract_json(id):
+    customer = Customer.query.get_or_404(id)
+    sales = Sale.query.filter_by(customer_id=id, status='completed').order_by(Sale.created_at).all()
+    payments = Payment.query.filter_by(customer_id=id).order_by(Payment.created_at).all()
+    rows = []
+    balance = 0
+    for s in sales:
+        balance += float(s.grand_total)
+        rows.append({
+            'date': s.created_at.strftime('%d.%m.%Y %H:%M'), 'type': 'satis',
+            'desc': f'Satis #{s.receipt_no}', 'debit': float(s.grand_total),
+            'credit': 0, 'balance': round(balance, 2)
+        })
+    for p in payments:
+        amt = float(p.amount)
+        if p.type == 'collection':
+            balance += amt
+            rows.append({
+                'date': p.created_at.strftime('%d.%m.%Y %H:%M'), 'type': 'tahsilat',
+                'desc': p.description or 'Tahsilat', 'debit': amt, 'credit': 0, 'balance': round(balance, 2)
+            })
+        else:
+            balance -= amt
+            rows.append({
+                'date': p.created_at.strftime('%d.%m.%Y %H:%M'), 'type': 'odeme',
+                'desc': p.description or 'Odeme', 'debit': 0, 'credit': amt, 'balance': round(balance, 2)
+            })
+    rows.sort(key=lambda x: x['date'])
+    return jsonify({
+        'customer': customer.name, 'balance': round(balance, 2),
+        'rows': rows, 'sale_total': sum(float(s.grand_total) for s in sales),
+        'payment_total': sum(float(p.amount) for p in payments)
+    })

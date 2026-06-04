@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4><i class="bi bi-boxes"></i> {{ set_prod.name }}</h4>
+        <small class="text-muted">Barkod: {{ set_prod.barcode }} | Stok: {{ set_prod.stock_qty }} {{ set_prod.unit }}</small>
+    </div>
+    <div>
+        <a href="{{ url_for('stock.set_products') }}" class="btn btn-outline-secondary">Geri</a>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Set Bilgisi</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr><td>Satış Fiyatı</td><td class="fw-bold">{{ set_prod.sale_price }} ₺</td></tr>
+                    <tr><td>Maliyet</td><td>{{ set_prod.purchase_price }} ₺</td></tr>
+                    <tr><td>Kâr</td><td class="text-success">{{ (set_prod.sale_price - set_prod.purchase_price)|round(2) }} ₺</td></tr>
+                    <tr><td>Stok</td><td>{{ set_prod.stock_qty }}</td></tr>
+                    <tr><td>Kategori</td><td>{{ set_prod.category.name if set_prod.category else '-' }}</td></tr>
+                </table>
+                <hr>
+                <form method="POST" action="{{ url_for('stock.set_product_unpack', id=set_prod.id) }}">
+                    <div class="input-group">
+                        <input type="number" name="qty" class="form-control" value="1" min="1" step="1">
+                        <button class="btn btn-warning" type="submit"><i class="bi bi-unlock"></i> Seti Aç</button>
+                    </div>
+                    <small class="text-muted">Seti açar, bileşenleri tek tek stoğa ekler.</small>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">İçindekiler</div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Barkod</th><th>Ürün</th><th>Miktar</th><th>Birim Maliyet</th><th>Toplam Maliyet</th></tr></thead>
+                <tbody>
+                    {% for c in components %}
+                    <tr>
+                        <td><small>{{ c.component.barcode if c.component else '' }}</small></td>
+                        <td>{{ c.component.name if c.component else '-' }}</td>
+                        <td>{{ c.quantity }}</td>
+                        <td>{{ c.component.purchase_price if c.component else 0 }} ₺</td>
+                        <td>{{ (c.component.purchase_price * c.quantity)|round(2) if c.component else 0 }} ₺</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

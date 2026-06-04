@@ -32,6 +32,8 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('stock.stock_list') }}">Stok Listesi</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('stock.product_labels') }}">Barkod Etiketi Bas</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('stock.price_history') }}">Fiyat Geçmişi</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('stock.set_products') }}">Set Ürünler</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('stock_count.index') }}">Stok Sayımı</a></li>
                         </ul>
@@ -41,20 +43,28 @@
                             <i class="bi bi-truck"></i> Tedarikçi
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('purchase.purchase') }}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-box-seam"></i> Alış
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('purchase.purchase') }}">Stok Giriş/Çıkış</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('purchase.invoice_list') }}">Alış Faturaları</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('customer.customer_list') }}">
                             <i class="bi bi-people"></i> Cari
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('cash.cash_register') }}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-safe"></i> Kasa
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('cash.cash_register') }}">Kasa Raporu</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('cashreg.index') }}">Açılış/Kapanış</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('expense.expense_list') }}">
@@ -94,6 +104,8 @@
                             <li><a class="dropdown-item" href="{{ url_for('settings.index') }}"><i class="bi bi-gear"></i> Ayarlar</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" id="darkModeToggle" href="#"><i class="bi bi-moon-stars"></i> <span id="darkModeText">Karanlık Mod</span></a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.cikis') }}"><i class="bi bi-box-arrow-right"></i> Çıkış</a></li>
                         </ul>
                     </li>
@@ -119,5 +131,29 @@
 
     <script src="{{ url_for('static', filename='lib/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+(function() {
+    var theme = localStorage.getItem('barkodpos-theme') || 'light';
+    if (theme === 'dark') { document.documentElement.setAttribute('data-bs-theme', 'dark'); }
+    var toggle = document.getElementById('darkModeToggle');
+    var text = document.getElementById('darkModeText');
+    if (toggle) {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            var current = document.documentElement.getAttribute('data-bs-theme');
+            if (current === 'dark') {
+                document.documentElement.removeAttribute('data-bs-theme');
+                localStorage.setItem('barkodpos-theme', 'light');
+                text.textContent = 'Karanlık Mod';
+            } else {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+                localStorage.setItem('barkodpos-theme', 'dark');
+                text.textContent = 'Aydınlık Mod';
+            }
+        });
+        if (theme === 'dark') text.textContent = 'Aydınlık Mod';
+    }
+})();
+</script>
 </body>
 </html>

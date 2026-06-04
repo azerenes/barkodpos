@@ -43,6 +43,9 @@ class Product(db.Model):
     min_stock_qty = db.Column(db.Numeric(10,2), default=0)
     image_url = db.Column(db.String(500))
     is_active = db.Column(db.Boolean, default=True)
+    wholesale_price = db.Column(db.Numeric(10,2), default=0)
+    wholesale_min_qty = db.Column(db.Numeric(10,2), default=0)
+    is_set = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -136,6 +139,77 @@ class Expense(db.Model):
     expense_date = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='expenses')
+
+class PurchaseInvoice(db.Model):
+    __tablename__ = 'purchase_invoices'
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    invoice_no = db.Column(db.String(100))
+    invoice_date = db.Column(db.DateTime, default=datetime.utcnow)
+    total_amount = db.Column(db.Numeric(10,2), default=0)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    supplier = db.relationship('Supplier')
+    user = db.relationship('User')
+
+class PurchaseInvoiceItem(db.Model):
+    __tablename__ = 'purchase_invoice_items'
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('purchase_invoices.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Numeric(10,2), default=1)
+    unit_price = db.Column(db.Numeric(10,2), default=0)
+    total_price = db.Column(db.Numeric(10,2), default=0)
+    product = db.relationship('Product')
+    invoice = db.relationship('PurchaseInvoice', backref='items')
+
+class PriceHistory(db.Model):
+    __tablename__ = 'price_history'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    price_type = db.Column(db.Enum('purchase', 'sale'), nullable=False)
+    old_price = db.Column(db.Numeric(10,2), default=0)
+    new_price = db.Column(db.Numeric(10,2), default=0)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    product = db.relationship('Product')
+    user = db.relationship('User')
+
+class CashRegister(db.Model):
+    __tablename__ = 'cash_registers'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    opening_balance = db.Column(db.Numeric(10,2), default=0)
+    closing_balance = db.Column(db.Numeric(10,2), default=0)
+    expected_balance = db.Column(db.Numeric(10,2), default=0)
+    difference = db.Column(db.Numeric(10,2), default=0)
+    status = db.Column(db.Enum('open', 'closed'), default='open')
+    notes = db.Column(db.Text)
+    opened_at = db.Column(db.DateTime, default=datetime.utcnow)
+    closed_at = db.Column(db.DateTime)
+    user = db.relationship('User')
+
+class ProductPrice(db.Model):
+    __tablename__ = 'product_prices'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    price_type = db.Column(db.String(20), nullable=False)  # retail, wholesale
+    price = db.Column(db.Numeric(10,2), default=0)
+    min_qty = db.Column(db.Numeric(10,2), default=0)
+    product = db.relationship('Product')
+
+class RecipeItem(db.Model):
+    __tablename__ = 'recipe_items'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    component_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Numeric(10,2), default=1)
+    product = db.relationship('Product', foreign_keys=[product_id])
+    component = db.relationship('Product', foreign_keys=[component_id])
 
 class StockCount(db.Model):
     __tablename__ = 'stock_counts'

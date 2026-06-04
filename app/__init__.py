@@ -26,6 +26,7 @@ def create_app():
     from app.routes.supplier import supplier_bp
     from app.routes.expense import expense_bp
     from app.routes.stock_count import stock_count_bp
+    from app.routes.cash_register import cashreg_bp
     from app.routes.main import main_bp
 
     app.register_blueprint(auth_bp)
@@ -43,6 +44,7 @@ def create_app():
     app.register_blueprint(supplier_bp)
     app.register_blueprint(expense_bp)
     app.register_blueprint(stock_count_bp)
+    app.register_blueprint(cashreg_bp)
     app.register_blueprint(main_bp)
 
     @app.context_processor
@@ -105,6 +107,9 @@ def create_app():
                 'ALTER TABLE products ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
                 'ALTER TABLE sale_items ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
                 'ALTER TABLE sale_items ADD COLUMN tax_amount NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN wholesale_price NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN wholesale_min_qty NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN is_set BOOLEAN DEFAULT 0',
             ]:
                 try:
                     conn.execute(sa_text(stmt))

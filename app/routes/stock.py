@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
-from app.models import Product, Category, StockMovement, Supplier
+from app.models import Product, Category, StockMovement, Supplier, PriceHistory, ProductPrice, RecipeItem
 from app import db
 from sqlalchemy import or_
+from datetime import datetime
 
 stock_bp = Blueprint('stock', __name__, url_prefix='/stock')
 
@@ -98,6 +99,8 @@ def update_product(id):
         if purchase_price < 0:
             flash('Alış fiyatı negatif olamaz', 'error')
             return redirect(url_for('stock.stock_list'))
+        old_sale = float(product.sale_price)
+        old_purchase = float(product.purchase_price)
         product.name = name
         product.sale_price = sale_price
         product.purchase_price = purchase_price
@@ -106,7 +109,15 @@ def update_product(id):
         product.unit = request.form.get('unit', 'Adet')
         product.category_id = request.form.get('category_id') or None
         product.supplier_id = request.form.get('supplier_id') or None
+        wholesale_price = float(request.form.get('wholesale_price', 0) or 0)
+        wholesale_min = float(request.form.get('wholesale_min_qty', 0) or 0)
+        if wholesale_price > 0:
+            product.wholesale_price = wholesale_price
+            product.wholesale_min_qty = wholesale_min
         db.session.commit()
+        from app.routes.purchase import log_price_history
+        log_price_history(product.id, 'sale', old_sale, sale_price, 'Stok güncelleme')
+        log_price_history(product.id, 'purchase', old_purchase, purchase_price, 'Stok güncelleme')
         flash('Ürün güncellendi', 'success')
     except Exception as e:
         db.session.rollback()
@@ -245,10 +256,135 @@ def csv_import():
         flash(f'CSV hatası: {str(e)}', 'error')
     return redirect(url_for('stock.stock_list'))
 
+@stock_bp.route('/price-history')
+@login_required
+def price_history():
+    product_id = request.args.get('product_id', type=int)
+    query = PriceHistory.query.order_by(PriceHistory.created_at.desc())
+    if product_id:
+        query = query.filter_by(product_id=product_id)
+    history = query.limit(100).all()
+    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
+    return render_template('price_history.html', history=history, products=products, selected_id=product_id)
+
+@stock_bp.route('/price-history/<int:product_id>')
+@login_required
+def price_history_json(product_id):
+    history = PriceHistory.query.filter_by(product_id=product_id).order_by(PriceHistory.created_at.desc()).all()
+    return jsonify([{
+        'id': h.id, 'price_type': h.price_type, 'old_price': round(float(h.old_price), 2),
+        'new_price': round(float(h.new_price), 2), 'notes': h.notes or '',
+        'created_at': h.created_at.strftime('%d.%m.%Y %H:%M'),
+        'user_name': h.user.full_name if h.user else ''
+    } for h in history])
+
+@stock_bp.route('/prices/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def manage_prices(product_id):
+    product = Product.query.get_or_404(product_id)
+    if request.method == 'POST':
+        sale_price = round(float(request.form.get('sale_price', 0)), 2)
+        purchase_price = round(float(request.form.get('purchase_price', 0)), 2)
+        wholesale_price = round(float(request.form.get('wholesale_price', 0)), 2)
+        wholesale_min = round(float(request.form.get('wholesale_min_qty', 0)), 2)
+
+        old_sale = float(product.sale_price)
+        old_purchase = float(product.purchase_price)
+
+        if sale_price > 0 and sale_price != old_sale:
+            product.sale_price = sale_price
+        if purchase_price > 0 and purchase_price != old_purchase:
+            product.purchase_price = purchase_price
+
+        product.wholesale_price = wholesale_price
+        product.wholesale_min_qty = wholesale_min
+        db.session.commit()
+        flash('Fiyatlar güncellendi', 'success')
+        return redirect(url_for('stock.price_history', product_id=product_id))
+
+    history = PriceHistory.query.filter_by(product_id=product_id).order_by(PriceHistory.created_at.desc()).limit(20).all()
+    return render_template('manage_prices.html', product=product, history=history)
+
+@stock_bp.route('/set-products')
+@login_required
+def set_products():
+    sets = Product.query.filter_by(is_set=True, is_active=True).order_by(Product.name).all()
+    return render_template('set_products.html', sets=sets)
+
+@stock_bp.route('/set-products/new', methods=['GET', 'POST'])
+@login_required
+def set_product_new():
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name', '').strip()
+            barcode = request.form.get('barcode', '').strip() or f'SET-{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+            sale_price = round(float(request.form.get('sale_price', 0)), 2)
+            cat_id = request.form.get('category_id')
+            component_ids = request.form.getlist('component_id[]')
+            quantities = request.form.getlist('component_qty[]')
+            if not name or sale_price <= 0:
+                flash('Ad ve fiyat gerekli', 'error')
+                return redirect(url_for('stock.set_product_new'))
+            set_product = Product(
+                barcode=barcode, name=name, sale_price=sale_price, purchase_price=0,
+                stock_qty=0, category_id=int(cat_id) if cat_id else None,
+                unit='Adet', is_active=True, is_set=True,
+                tax_rate=float(request.form.get('tax_rate', 0) or 0)
+            )
+            db.session.add(set_product)
+            db.session.flush()
+            for i in range(len(component_ids)):
+                cid = component_ids[i]
+                qty = round(float(quantities[i] if i < len(quantities) else 1), 2)
+                if cid and qty > 0:
+                    db.session.add(RecipeItem(product_id=set_product.id, component_id=int(cid), quantity=qty))
+                    comp = Product.query.get(int(cid))
+                    if comp:
+                        set_product.purchase_price = round(float(set_product.purchase_price) + float(comp.purchase_price) * qty, 2)
+            db.session.commit()
+            flash('Set ürün oluşturuldu', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Hata: {str(e)}', 'error')
+        return redirect(url_for('stock.set_products'))
+
+    products = Product.query.filter_by(is_active=True, is_set=False).order_by(Product.name).all()
+    categories = Category.query.order_by(Category.name).all()
+    return render_template('set_product_new.html', products=products, categories=categories)
+
+@stock_bp.route('/set-products/<int:id>')
+@login_required
+def set_product_detail(id):
+    set_prod = Product.query.get_or_404(id)
+    components = RecipeItem.query.filter_by(product_id=id).all()
+    return render_template('set_product_detail.html', set_prod=set_prod, components=components)
+
+@stock_bp.route('/set-products/<int:id>/unpack', methods=['POST'])
+@login_required
+def set_product_unpack(id):
+    set_prod = Product.query.get_or_404(id)
+    if not set_prod.is_set:
+        return jsonify({'error': 'Set ürün değil'}), 400
+    qty = round(float(request.form.get('qty', 1)), 2)
+    if qty <= 0:
+        flash('Geçersiz miktar', 'error')
+        return redirect(url_for('stock.set_product_detail', id=id))
+    if float(set_prod.stock_qty) < qty:
+        flash(f'Yetersiz stok: {set_prod.stock_qty}', 'error')
+        return redirect(url_for('stock.set_product_detail', id=id))
+    components = RecipeItem.query.filter_by(product_id=id).all()
+    for comp in components:
+        comp_product = Product.query.get(comp.component_id)
+        if comp_product:
+            comp_product.stock_qty = round(float(comp_product.stock_qty) + float(comp.quantity) * qty, 2)
+    set_prod.stock_qty = round(float(set_prod.stock_qty) - qty, 2)
+    db.session.commit()
+    flash(f'{qty} adet set ürün açıldı, bileşenler stoğa eklendi', 'success')
+    return redirect(url_for('stock.set_product_detail', id=id))
+
 @stock_bp.route('/add-category-ajax', methods=['POST'])
 @login_required
 def add_category_ajax():
-    from flask import jsonify
     name = request.form.get('name', '').strip()
     if not name:
         return jsonify({'success': False, 'error': 'Kategori adı gerekli'}), 400

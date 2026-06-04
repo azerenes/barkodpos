@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-clock-history"></i> Fiyat Değişiklik Geçmişi</h4>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="mb-2">
+            <select id="productFilter" class="form-select" onchange="filterProduct()">
+                <option value="">Tüm Ürünler</option>
+                {% for p in products %}
+                <option value="{{ p.id }}" {{ 'selected' if selected_id == p.id }}>{{ p.name }} ({{ p.barcode }})</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Tarih</th><th>Ürün</th><th>Tip</th><th>Eski Fiyat</th><th>Yeni Fiyat</th><th>Değişim</th><th>Kullanıcı</th><th>Not</th></tr></thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td><small>{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                    <td><a href="{{ url_for('stock.manage_prices', product_id=h.product_id) }}">{{ h.product.name if h.product else '-' }}</a></td>
+                    <td><span class="badge bg-info">{{ 'Satış' if h.price_type == 'sale' else 'Alış' }}</span></td>
+                    <td>{{ h.old_price }} ₺</td>
+                    <td class="fw-bold">{{ h.new_price }} ₺</td>
+                    <td class="{% if h.new_price > h.old_price %}text-success{% elif h.new_price < h.old_price %}text-danger{% endif %}">
+                        {% if h.new_price > h.old_price %}+{% endif %}{{ (h.new_price - h.old_price)|round(2) }} ₺
+                    </td>
+                    <td><small>{{ h.user.full_name if h.user else '-' }}</small></td>
+                    <td><small class="text-muted">{{ h.notes or '' }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-3">Fiyat değişikliği bulunamadı</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+function filterProduct() {
+    var val = document.getElementById('productFilter').value;
+    if (val) { window.location.href = '/stock/price-history?product_id=' + val; }
+    else { window.location.href = '/stock/price-history'; }
+}
+</script>
+{% endblock %}

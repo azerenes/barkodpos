@@ -57,6 +57,19 @@
                             <input type="number" name="low_stock_warning" class="form-control" value="{{ low_stock_warning }}" min="0">
                         </div>
                     </div>
+                    <hr>
+                    <label class="fw-bold">Döviz Kurları (opsiyonel)</label>
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label>$ USD</label>
+                            <input type="number" name="currency_usd" class="form-control" value="{{ currency_usd }}" step="0.01" min="0" placeholder="0">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label>€ EUR</label>
+                            <input type="number" name="currency_eur" class="form-control" value="{{ currency_eur }}" step="0.01" min="0" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="small text-muted">Döviz kurları raporlarda ve POS'ta dönüşüm için kullanılır. 0 bırakılırsa kullanılmaz.</div>
                     <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-save"></i> Kaydet</button>
                 </form>
             </div>
@@ -68,9 +81,22 @@
             <div class="card-header"><i class="bi bi-database"></i> Veritabanı Yedekleme</div>
             <div class="card-body">
                 <p class="text-muted">Veritabanınızın yedeğini almak için aşağıdaki butonu kullanın. Yedek dosyaları <code>instance/</code> klasöründe saklanır.</p>
-                <a href="{{ url_for('settings.backup') }}" class="btn btn-outline-primary w-100" onclick="return confirm('Yedekleme başlatılsın mı?')">
+                <a href="{{ url_for('settings.backup') }}" class="btn btn-outline-primary w-100 mb-2" onclick="return confirm('Yedekleme başlatılsın mı?')">
                     <i class="bi bi-cloud-arrow-down"></i> Şimdi Yedekle
                 </a>
+                <hr>
+                <form method="POST" action="{{ url_for('settings.restore') }}" onsubmit="return confirm('Veritabanı geri yüklenecek! Önce otomatik yedek alınır. Devam?')">
+                    <label class="fw-bold">Yedekten Geri Yükle</label>
+                    <div class="input-group">
+                        <select name="backup_file" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for b in backups %}
+                            <option value="{{ b }}">{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-warning" type="submit"><i class="bi bi-arrow-counterclockwise"></i> Geri Yükle</button>
+                    </div>
+                </form>
             </div>
         </div>
 

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-safe"></i> Kasa Açılış/Kapanış</h4>
+</div>
+
+{% if open_reg %}
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <span><strong>Kasa Açık</strong> — Açılış: {{ open_reg.opening_balance }} ₺ ({{ open_reg.opened_at.strftime('%d.%m.%Y %H:%M') }})</span>
+    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#closeModal">Kasa Kapat</button>
+</div>
+{% else %}
+<div class="alert alert-secondary">
+    <strong>Kasa Kapalı</strong> — Günlük kasayı açmak için butona tıklayın.
+    <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#openModal">Kasa Aç</button>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">Kasa Geçmişi</div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Tarih</th><th>Açılış</th><th>Beklenen</th><th>Kapanış</th><th>Fark</th><th>Kullanıcı</th><th>Durum</th></tr></thead>
+            <tbody>
+                {% for r in registers %}
+                <tr>
+                    <td><small>{{ r.opened_at.strftime('%d.%m.%Y') }}</small></td>
+                    <td>{{ r.opening_balance }} ₺</td>
+                    <td>{{ r.expected_balance }} ₺</td>
+                    <td>{{ r.closing_balance }} ₺</td>
+                    <td class="{% if r.difference > 0 %}text-success{% elif r.difference < 0 %}text-danger{% endif %} fw-bold">
+                        {{ r.difference }} ₺
+                    </td>
+                    <td><small>{{ r.user.full_name if r.user else '-' }}</small></td>
+                    <td>
+                        {% if r.status == 'open' %}
+                        <span class="badge bg-success">Açık</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Kapalı</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-3">Kayıt yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="openModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('cashreg.open_register') }}">
+                <div class="modal-header"><h5>Kasa Aç</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Açılış Bakiyesi</label><input type="number" name="opening_balance" class="form-control" value="0" step="0.01" min="0"></div>
+                    <div class="mb-2"><label>Not</label><input type="text" name="notes" class="form-control" placeholder="İsteğe bağlı"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">Aç</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="closeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('cashreg.close_register') }}">
+                <div class="modal-header"><h5>Kasa Kapat</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Kasa Sayımı (Fiili Kasa Bakiyesi)</label><input type="number" name="closing_balance" class="form-control" step="0.01" min="0" required></div>
+                    <div class="small text-muted">Kapatıldığında bugünkü satışlar otomatik hesaplanır ve beklenen bakiye ile karşılaştırılır.</div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-warning">Kapat ve Hesapla</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

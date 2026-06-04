@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-boxes"></i> Set Ürünler</h4>
+    <a href="{{ url_for('stock.set_product_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Yeni Set</a>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Barkod</th><th>Set Adı</th><th>Fiyat</th><th>Stok</th><th>Kategori</th><th></th></tr></thead>
+            <tbody>
+                {% for s in sets %}
+                <tr>
+                    <td><small>{{ s.barcode }}</small></td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.sale_price }} ₺</td>
+                    <td>{{ s.stock_qty }}</td>
+                    <td>{{ s.category.name if s.category else '-' }}</td>
+                    <td><a href="{{ url_for('stock.set_product_detail', id=s.id) }}" class="btn btn-sm btn-outline-primary">Detay</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">Set ürün bulunamadı</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

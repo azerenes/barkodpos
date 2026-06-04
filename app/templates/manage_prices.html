@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-tags"></i> Fiyat Yönetimi: {{ product.name }}</h4>
+    <a href="{{ url_for('stock.stock_list') }}" class="btn btn-outline-secondary">Geri</a>
+</div>
+<div class="row g-3">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">Fiyat Bilgileri</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-2">
+                        <label>Satış Fiyatı (Perakende)</label>
+                        <input type="number" name="sale_price" class="form-control" value="{{ product.sale_price }}" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-2">
+                        <label>Alış Fiyatı</label>
+                        <input type="number" name="purchase_price" class="form-control" value="{{ product.purchase_price }}" step="0.01" min="0">
+                    </div>
+                    <hr>
+                    <div class="mb-2">
+                        <label>Toptan Satış Fiyatı</label>
+                        <input type="number" name="wholesale_price" class="form-control" value="{{ product.wholesale_price }}" step="0.01" min="0" placeholder="0 = kullanılmıyor">
+                    </div>
+                    <div class="mb-2">
+                        <label>Toptan Minimum Adet</label>
+                        <input type="number" name="wholesale_min_qty" class="form-control" value="{{ product.wholesale_min_qty }}" step="0.5" min="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">Fiyat Geçmişi</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Tarih</th><th>Tip</th><th>Eski</th><th>Yeni</th><th>Kullanıcı</th><th>Not</th></tr></thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr>
+                            <td><small>{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                            <td><span class="badge bg-info">{{ 'Satış' if h.price_type == 'sale' else 'Alış' }}</span></td>
+                            <td>{{ h.old_price }} ₺</td>
+                            <td class="fw-bold">{{ h.new_price }} ₺</td>
+                            <td><small>{{ h.user.full_name if h.user else '-' }}</small></td>
+                            <td><small class="text-muted">{{ h.notes or '' }}</small></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">Fiyat geçmişi yok</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

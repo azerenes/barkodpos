@@ -105,6 +105,67 @@ body {
     .card-header { padding: 8px 10px; font-size: 0.8rem; }
 }
 
+[data-bs-theme="dark"] body {
+    background-color: #1a1d21;
+}
+[data-bs-theme="dark"] .card {
+    background-color: #2c2f33;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+[data-bs-theme="dark"] .card-header {
+    background: #2c2f33;
+    border-bottom: 1px solid #3a3d41;
+    color: #e0e0e0;
+}
+[data-bs-theme="dark"] .table {
+    color: #ccc;
+}
+[data-bs-theme="dark"] .table th {
+    color: #999;
+}
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #3a3d41;
+    border-color: #555;
+    color: #e0e0e0;
+}
+[data-bs-theme="dark"] .modal-content {
+    background-color: #2c2f33;
+    color: #e0e0e0;
+}
+[data-bs-theme="dark"] .text-muted {
+    color: #999 !important;
+}
+[data-bs-theme="dark"] .alert {
+    background-color: #3a3d41;
+    color: #e0e0e0;
+    border-color: #555;
+}
+[data-bs-theme="dark"] .list-group-item {
+    background-color: #2c2f33;
+    color: #e0e0e0;
+    border-color: #3a3d41;
+}
+[data-bs-theme="dark"] #receiptArea {
+    color: #e0e0e0;
+}
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: #2c2f33;
+}
+[data-bs-theme="dark"] .dropdown-item {
+    color: #e0e0e0;
+}
+[data-bs-theme="dark"] .dropdown-item:hover {
+    background-color: #3a3d41;
+}
+[data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd) {
+    background-color: rgba(255,255,255,0.03);
+}
+
+#darkModeToggle {
+    cursor: pointer;
+}
+
 @media print {
     .navbar, .container-fluid > .text-center, .btn { display: none !important; }
     .card { box-shadow: none !important; border: 1px dashed #ccc !important; }
