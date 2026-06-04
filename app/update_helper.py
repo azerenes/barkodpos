@@ -1,7 +1,7 @@
 import os, sys, json, urllib.request, urllib.error, zipfile, tempfile, shutil, subprocess, ssl
 
 CURRENT_VERSION = '1.0.0'
-GITHUB_OWNER = 'your-username'
+GITHUB_OWNER = 'azerenes'
 GITHUB_REPO = 'BarkodPOS'
 
 def get_app_dir():

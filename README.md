@@ -1,7 +1,7 @@
 <picture>
   <source
-    srcset="https://raw.githubusercontent.com/your-username/BarkodPOS/main/docs/banner-dark.png" media="(prefers-color-scheme: dark)" />
-  <img alt="BarkodPOS Banner" src="https://raw.githubusercontent.com/your-username/BarkodPOS/main/docs/banner-light.png" />
+    srcset="https://raw.githubusercontent.com/azerenes/barkodpos/main/docs/banner-dark.png" media="(prefers-color-scheme: dark)" />
+  <img alt="BarkodPOS Banner" src="https://raw.githubusercontent.com/azerenes/barkodpos/main/docs/banner-light.png" />
 </picture>
 
 # 🏪 BarkodPOS — Profesyonel Perakende Satış ve Stok Yönetim Sistemi
@@ -140,7 +140,7 @@ C: Şu an için her şube kendi bilgisayarında çalışır. Merkezi sunucu vers
 Sorun, öneri veya özellik talebi için:
 
 - 📧 E-posta: *(destek e-posta adresi)*
-- 🐛 GitHub Issues: [github.com/your-username/BarkodPOS/issues](https://github.com/your-username/BarkodPOS/issues)
+- 🐛 GitHub Issues: [github.com/azerenes/barkodpos/issues](https://github.com/azerenes/barkodpos/issues)
 
 ---
 
