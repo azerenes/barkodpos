@@ -25,6 +25,7 @@ def create_app():
     from app.routes.transfer import transfer_bp
     from app.routes.supplier import supplier_bp
     from app.routes.expense import expense_bp
+    from app.routes.stock_count import stock_count_bp
     from app.routes.main import main_bp
 
     app.register_blueprint(auth_bp)
@@ -41,6 +42,7 @@ def create_app():
     app.register_blueprint(transfer_bp)
     app.register_blueprint(supplier_bp)
     app.register_blueprint(expense_bp)
+    app.register_blueprint(stock_count_bp)
     app.register_blueprint(main_bp)
 
     @app.context_processor

@@ -137,6 +137,32 @@ class Expense(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='expenses')
 
+class StockCount(db.Model):
+    __tablename__ = 'stock_counts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    status = db.Column(db.Enum('in_progress', 'completed', 'cancelled'), default='in_progress')
+    notes = db.Column(db.Text)
+    total_items = db.Column(db.Integer, default=0)
+    matched_items = db.Column(db.Integer, default=0)
+    mismatch_items = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    user = db.relationship('User')
+
+class StockCountItem(db.Model):
+    __tablename__ = 'stock_count_items'
+    id = db.Column(db.Integer, primary_key=True)
+    count_id = db.Column(db.Integer, db.ForeignKey('stock_counts.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    system_qty = db.Column(db.Numeric(10,2), default=0)
+    counted_qty = db.Column(db.Numeric(10,2), default=0)
+    difference = db.Column(db.Numeric(10,2), default=0)
+    status = db.Column(db.Enum('pending', 'matched', 'mismatch'), default='pending')
+    product = db.relationship('Product')
+    count = db.relationship('StockCount', backref='items')
+
 class Payment(db.Model):
     __tablename__ = 'payments'
     id = db.Column(db.Integer, primary_key=True)

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-clipboard-data"></i> Stok Sayımı</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCountModal">
+        <i class="bi bi-plus-lg"></i> Yeni Sayım
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr><th>#</th><th>Tarih</th><th>Durum</th><th>Toplam</th><th>Eşleşen</th><th>Farklı</th><th>Kullanıcı</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for c in counts %}
+                <tr>
+                    <td>{{ c.id }}</td>
+                    <td><small>{{ c.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                    <td>
+                        {% if c.status == 'in_progress' %}
+                        <span class="badge bg-warning">Devam Ediyor</span>
+                        {% elif c.status == 'completed' %}
+                        <span class="badge bg-success">Tamamlandı</span>
+                        {% else %}
+                        <span class="badge bg-secondary">İptal</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ c.total_items }}</td>
+                    <td>{{ c.matched_items }}</td>
+                    <td>{{ c.mismatch_items }}</td>
+                    <td><small>{{ c.user.full_name if c.user else '-' }}</small></td>
+                    <td><a href="{{ url_for('stock_count.detail', id=c.id) }}" class="btn btn-sm btn-outline-primary">Detay</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-3">Henüz sayım yapılmamış</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="newCountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="bi bi-plus-lg"></i> Yeni Stok Sayımı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label>Kategori Filtresi (opsiyonel)</label>
+                    <select id="countCategory" class="form-select">
+                        <option value="">Tüm Kategoriler</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label>Not</label>
+                    <textarea id="countNotes" class="form-control" rows="2" placeholder="İsteğe bağlı not..."></textarea>
+                </div>
+                <div id="countError" class="text-danger small"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button class="btn btn-primary" onclick="startCount()"><i class="bi bi-play"></i> Başlat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function startCount() {
+    var btn = event.target; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    var catId = document.getElementById('countCategory').value;
+    var notes = document.getElementById('countNotes').value;
+    fetch('{{ url_for("stock_count.new_count") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({category_id: catId || null, notes: notes})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.error) { document.getElementById('countError').textContent = d.error; btn.disabled = false; btn.innerHTML = '<i class="bi bi-play"></i> Başlat'; return; }
+        window.location.href = '{{ url_for("stock_count.detail", id=0) }}'.replace('0', d.id);
+    });
+}
+</script>
+{% endblock %}
