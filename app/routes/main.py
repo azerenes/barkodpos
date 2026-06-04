@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Customer, Sale, StockMovement
 from app import db
@@ -37,3 +37,35 @@ def dashboard():
         recent_sales=recent_sales,
         sales_count_today=len(today_sales),
         today=today)
+
+@main_bp.route('/diagnostic/info')
+@login_required
+def diagnostic_info():
+    import platform, sys, os
+    try:
+        from app.update_helper import CURRENT_VERSION, GITHUB_OWNER, GITHUB_REPO
+    except:
+        CURRENT_VERSION = '?'
+        GITHUB_OWNER = 'azerenes'
+        GITHUB_REPO = 'BarkodPOS'
+    info = {
+        'version': CURRENT_VERSION,
+        'github_owner': GITHUB_OWNER,
+        'github_repo': GITHUB_REPO,
+        'os': platform.platform(),
+        'python': sys.version,
+        'app_dir': os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        'user_id': get_user_id(),
+        'user_name': get_user_name(),
+        'branch_id': get_branch_id(),
+        'is_admin': is_admin(),
+        'time': datetime.utcnow().isoformat(),
+    }
+    try:
+        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'instance', 'barkodpos.db')
+        if os.path.exists(db_path):
+            info['db_size_mb'] = round(os.path.getsize(db_path) / (1024*1024), 2)
+            info['db_mtime'] = datetime.fromtimestamp(os.path.getmtime(db_path)).isoformat()
+    except:
+        pass
+    return jsonify(info)

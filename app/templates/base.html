@@ -106,6 +106,8 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" id="darkModeToggle" href="#"><i class="bi bi-moon-stars"></i> <span id="darkModeText">Karanlık Mod</span></a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="reportIssue()"><i class="bi bi-bug"></i> Sorun Bildir</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.cikis') }}"><i class="bi bi-box-arrow-right"></i> Çıkış</a></li>
                         </ul>
                     </li>
@@ -131,6 +133,33 @@
 
     <script src="{{ url_for('static', filename='lib/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<div class="modal fade" id="issueModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bug"></i> Sorun Bildir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Sorunu açıklayın</label>
+                    <textarea id="issueDesc" class="form-control" rows="4" placeholder="Ne yapıyordunuz, ne oldu?"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tanı bilgileri (otomatik)</label>
+                    <pre id="diagInfo" class="bg-light p-2 rounded" style="font-size:12px;max-height:200px;overflow:auto;"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button class="btn btn-primary" onclick="submitIssue()">
+                    <i class="bi bi-github"></i> GitHub'da Bildir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     var theme = localStorage.getItem('barkodpos-theme') || 'light';
@@ -154,6 +183,48 @@
         if (theme === 'dark') text.textContent = 'Aydınlık Mod';
     }
 })();
+
+var _diagData = null;
+
+function reportIssue() {
+    fetch('/diagnostic/info')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            _diagData = data;
+            var txt = 'Surum: ' + data.version + '\n'
+                + 'Isletim Sistemi: ' + data.os + '\n'
+                + 'Kullanici: ' + data.user_name + ' (#' + data.user_id + ')\n'
+                + 'Sube: #' + data.branch_id + '\n'
+                + 'Zaman: ' + data.time + '\n'
+                + 'Python: ' + data.python + '\n';
+            if (data.db_size_mb) txt += 'DB Boyutu: ' + data.db_size_mb + ' MB\n';
+            document.getElementById('diagInfo').textContent = txt;
+            var modal = new bootstrap.Modal(document.getElementById('issueModal'));
+            modal.show();
+        })
+        .catch(function(err) {
+            alert('Tanı bilgisi alınamadı: ' + err.message);
+        });
+}
+
+function submitIssue() {
+    var desc = document.getElementById('issueDesc').value.trim() || '(açıklama yok)';
+    var body = '## Sorun\n' + desc + '\n\n## Tanı Bilgileri\n```\n'
+        + 'Surum: ' + _diagData.version + '\n'
+        + 'Isletim Sistemi: ' + _diagData.os + '\n'
+        + 'Kullanici: ' + _diagData.user_name + '\n'
+        + 'Sube: #' + _diagData.branch_id + '\n'
+        + 'Zaman: ' + _diagData.time + '\n';
+    if (_diagData.db_size_mb) body += 'DB Boyutu: ' + _diagData.db_size_mb + ' MB\n';
+    body += '```\n---\n*BarkodPOS v' + _diagData.version + ' otomatik rapor*';
+    var url = 'https://github.com/' + _diagData.github_owner + '/' + _diagData.github_repo
+        + '/issues/new?title=' + encodeURIComponent('[Hata] ' + desc.slice(0, 80))
+        + '&body=' + encodeURIComponent(body);
+    window.open(url, '_blank');
+    var modalEl = document.getElementById('issueModal');
+    var modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+}
 </script>
 </body>
 </html>
