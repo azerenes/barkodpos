@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-gear"></i> Sistem Ayarları</h4>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Firma Bilgileri</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings.save') }}">
+                    <div class="mb-2">
+                        <label>Firma Adı</label>
+                        <input type="text" name="company_name" class="form-control" value="{{ company_name }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label>Vergi Dairesi</label>
+                            <input type="text" name="tax_office" class="form-control" value="{{ tax_office }}">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label>Vergi No</label>
+                            <input type="text" name="tax_number" class="form-control" value="{{ tax_number }}">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>Adres</label>
+                        <textarea name="address" class="form-control" rows="2">{{ address }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label>Telefon</label>
+                            <input type="text" name="phone" class="form-control" value="{{ phone }}">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label>E-posta</label>
+                            <input type="email" name="email" class="form-control" value="{{ email }}">
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-4 mb-2">
+                            <label>Vergi Oranı (%)</label>
+                            <input type="number" name="tax_rate" class="form-control" value="{{ tax_rate }}" step="0.1" min="0">
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label>Para Birimi</label>
+                            <select name="currency" class="form-select">
+                                <option value="₺" {{ 'selected' if currency == '₺' }}>₺ TL</option>
+                                <option value="$" {{ 'selected' if currency == '$' }}>$ USD</option>
+                                <option value="€" {{ 'selected' if currency == '€' }}>€ EUR</option>
+                            </select>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label>Stok Uyarı Limiti</label>
+                            <input type="number" name="low_stock_warning" class="form-control" value="{{ low_stock_warning }}" min="0">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-save"></i> Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-database"></i> Veritabanı Yedekleme</div>
+            <div class="card-body">
+                <p class="text-muted">Veritabanınızın yedeğini almak için aşağıdaki butonu kullanın. Yedek dosyaları <code>instance/</code> klasöründe saklanır.</p>
+                <a href="{{ url_for('settings.backup') }}" class="btn btn-outline-primary w-100" onclick="return confirm('Yedekleme başlatılsın mı?')">
+                    <i class="bi bi-cloud-arrow-down"></i> Şimdi Yedekle
+                </a>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-envelope"></i> E-posta Ayarları (SMTP)</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings.save') }}">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label>SMTP Sunucu</label>
+                            <input type="text" name="smtp_host" class="form-control" value="{{ smtp_host }}" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Port</label>
+                            <input type="number" name="smtp_port" class="form-control" value="{{ smtp_port }}" placeholder="587">
+                        </div>
+                        <div class="col-3 mb-2">
+                            <label>Şifreleme</label>
+                            <select name="smtp_tls" class="form-select">
+                                <option value="1" {{ 'selected' if smtp_tls == '1' }}>TLS</option>
+                                <option value="0" {{ 'selected' if smtp_tls == '0' }}>Yok</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" name="smtp_user" class="form-control" value="{{ smtp_user }}" placeholder="ornek@gmail.com">
+                    </div>
+                    <div class="mb-2">
+                        <label>Şifre</label>
+                        <input type="password" name="smtp_pass" class="form-control" value="{{ smtp_pass }}" placeholder="SMTP şifresi">
+                    </div>
+                    <div class="mb-2">
+                        <label>Gönderici E-posta (opsiyonel)</label>
+                        <input type="email" name="from_email" class="form-control" value="{{ from_email }}" placeholder="Bos bırakılırsa kullanıcı adı kullanılır">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-save"></i> Kaydet</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-arrow-repeat"></i> Güncelleme</div>
+            <div class="card-body">
+                <p class="text-muted" id="updateStatus">Sürüm kontrolü yapılıyor...</p>
+                <div id="updateActions" style="display:none">
+                    <button class="btn btn-success w-100 mb-2" id="btnUpdate" onclick="doUpdate()">
+                        <i class="bi bi-download"></i> Güncelle ve Yeniden Başlat
+                    </button>
+                    <div class="small text-muted" id="updateNotes"></div>
+                </div>
+                <button class="btn btn-outline-primary w-100" onclick="checkUpdate()">
+                    <i class="bi bi-arrow-repeat"></i> Kontrol Et
+                </button>
+                <div class="mt-2 small text-muted">
+                    GitHub repo: <code>{{ github_repo }}</code><br>
+                    <span class="text-info">Sürümü yayınlamak için GitHub'da release oluşturun.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Sistem Bilgisi</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr><td>Sürüm</td><td>BarkodPOS <span id="currentVersion">v{{ current_version }}</span></td></tr>
+                    <tr><td>Veritabanı</td><td>SQLite</td></tr>
+                    <tr><td>Kullanıcı</td><td>{{ current_user_name }}</td></tr>
+                    <tr><td>Rol</td><td><span class="badge bg-primary">{{ 'Yönetici' if current_user_is_admin else 'Personel' }}</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkUpdate() {
+    var statusEl = document.getElementById('updateStatus');
+    var actionsEl = document.getElementById('updateActions');
+    statusEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kontrol ediliyor...';
+    actionsEl.style.display = 'none';
+    fetch('{{ url_for("settings.check_update") }}')
+        .then(r => r.json())
+        .then(d => {
+            if (d.error) {
+                statusEl.innerHTML = '<span class="text-danger">' + d.error + '</span>';
+                return;
+            }
+            document.getElementById('currentVersion').textContent = 'v' + d.current_version;
+            if (d.has_update) {
+                statusEl.innerHTML = '<span class="text-success fw-bold">Yeni sürüm v' + d.remote_version + ' mevcut!</span>';
+                document.getElementById('btnUpdate').innerHTML = '<i class="bi bi-download"></i> v' + d.remote_version + ' İndir ve Güncelle';
+                var notes = document.getElementById('updateNotes');
+                notes.innerHTML = d.notes ? '<strong>Yenilikler:</strong><br>' + d.notes.replace(/\\n/g, '<br>') : '';
+                actionsEl.style.display = 'block';
+            } else {
+                statusEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> En güncel sürüm kullanılıyor (v' + d.current_version + ')</span>';
+            }
+        })
+        .catch(e => {
+            statusEl.innerHTML = '<span class="text-danger">Kontrol hatasÄ±</span>';
+        });
+}
+function doUpdate() {
+    if (!confirm('Güncelleme indirilecek ve uygulama yeniden başlayacak. Devam etmek istiyor musunuz?')) return;
+    var btn = document.getElementById('btnUpdate');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> İndiriliyor...';
+    fetch('{{ url_for("settings.do_update") }}', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.error) {
+                alert('Hata: ' + d.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-download"></i> Tekrar Dene';
+                return;
+            }
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Tamam, yeniden başlatılıyor...';
+            setTimeout(function() { window.location.href = '{{ url_for("auth.cikis") }}'; }, 3000);
+        })
+        .catch(e => {
+            alert('Ä°ndirme hatasÄ±');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-download"></i> Tekrar Dene';
+        });
+}
+checkUpdate();
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarkodPOS - Personel Seçimi</title>
+    <link href="{{ url_for('static', filename='lib/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        body { background: #1a1a2e; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .secim-card { background: #fff; border-radius: 16px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .secim-card h2 { text-align: center; color: #1a1a2e; margin-bottom: 8px; }
+        .secim-card p { text-align: center; color: #666; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <div class="secim-card">
+        <h2><i class="bi bi-upc-scan"></i> BarkodPOS</h2>
+        <p>Personel seçimi yapın</p>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-danger">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <div class="mb-3">
+                <select name="user_id" class="form-select form-select-lg" required>
+                    <option value="">-- Personel Seçin --</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.full_name or u.username }}{% if u.role == 'admin' %} (Yönetici){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-box-arrow-in-right"></i> Giriş
+            </button>
+        </form>
+    </div>
+    <script src="{{ url_for('static', filename='lib/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center py-5">
+    <div class="display-1 text-muted fw-bold">{{ code }}</div>
+    <p class="lead">{{ message }}</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary"><i class="bi bi-house"></i> Ana Sayfa</a>
+</div>
+{% endblock %}

@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-box"></i> Stok Yönetimi</h4>
+    <div>
+        <button class="btn btn-sm btn-success" onclick="exportStockExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#csvModal"><i class="bi bi-upload"></i> CSV</button>
+        <a href="{{ url_for('stock.categories') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-tags"></i> Kategoriler</a>
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal"><i class="bi bi-plus"></i> Ürün Ekle</button>
+    </div>
+</div>
+
+<form class="row g-2 mb-3" method="GET">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Ürün veya barkod ara..." value="{{ search }}">
+    </div>
+    <div class="col-md-2">
+        <select id="categoryFilter" class="form-select" onchange="filterStock()">
+            <option value="">Tüm Kategoriler</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover table-sm mb-0" id="stockTable">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Ürün Adı</th>
+                    <th>Kategori</th>
+                    <th>Alış</th>
+                    <th>Satış</th>
+                    <th>Stok</th>
+                    <th>Min</th>
+                    <th>Birim</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr class="{{ 'table-warning' if p.stock_qty <= p.min_stock_qty }}">
+                    <td>{{ p.barcode }}</td>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.category.name if p.category else '-' }}</td>
+                    <td>{{ p.purchase_price }} ₺</td>
+                    <td>{{ p.sale_price }} ₺</td>
+                    <td class="{{ 'text-danger fw-bold' if p.stock_qty <= p.min_stock_qty }}">
+                        {{ p.stock_qty }}
+                    </td>
+                    <td>{{ p.min_stock_qty }}</td>
+                    <td>{{ p.unit }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#editModal{{ p.id }}"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
+                                data-bs-target="#stockEntryModal{{ p.id }}"><i class="bi bi-plus-circle"></i></button>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="editModal{{ p.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="{{ url_for('stock.update_product', id=p.id) }}">
+                                <div class="modal-header"><h5>Ürün Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-2"><label>Ürün Adı</label><input type="text" name="name" class="form-control" value="{{ p.name }}" required></div>
+                                    <div class="row">
+                                        <div class="col-6 mb-2"><label>Alış Fiyatı</label><input type="number" name="purchase_price" class="form-control" value="{{ p.purchase_price }}" step="0.01"></div>
+                                        <div class="col-6 mb-2"><label>Satış Fiyatı</label><input type="number" name="sale_price" class="form-control" value="{{ p.sale_price }}" step="0.01" required></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-4 mb-2"><label>Min Stok</label><input type="number" name="min_stock_qty" class="form-control" value="{{ p.min_stock_qty }}" step="0.01"></div>
+                                        <div class="col-4 mb-2"><label>KDV %</label><input type="number" name="tax_rate" class="form-control" value="{{ p.tax_rate }}" step="0.01"></div>
+                                        <div class="col-4 mb-2"><label>Birim</label>
+                                            <select name="unit" class="form-select">
+                                                <option value="Adet" {{ 'selected' if p.unit == 'Adet' }}>Adet</option>
+                                                <option value="Düzine" {{ 'selected' if p.unit == 'Düzine' }}>Düzine</option>
+                                                <option value="Kg" {{ 'selected' if p.unit == 'Kg' }}>Kg</option>
+                                                <option value="Lt" {{ 'selected' if p.unit == 'Lt' }}>Lt</option>
+                                                <option value="Paket" {{ 'selected' if p.unit == 'Paket' }}>Paket</option>
+                                                <option value="Koli" {{ 'selected' if p.unit == 'Koli' }}>Koli</option>
+                                                <option value="Set" {{ 'selected' if p.unit == 'Set' }}>Set</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label>Kategori</label>
+                                        <div class="input-group">
+                                            <select name="category_id" class="form-select">
+                                                <option value="">-</option>
+                                                {% for cat in categories %}
+                                                <option value="{{ cat.id }}" {{ 'selected' if p.category_id == cat.id }}>{{ cat.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button class="btn btn-outline-primary" type="button" onclick="showEditCategory(this)" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2"><label>Tedarikçi</label>
+                                        <select name="supplier_id" class="form-select">
+                                            <option value="">-</option>
+                                            {% for s in suppliers %}
+                                            <option value="{{ s.id }}" {{ 'selected' if p.supplier_id == s.id }}>{{ s.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="stockEntryModal{{ p.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="{{ url_for('stock.stock_entry', id=p.id) }}">
+                                <div class="modal-header"><h5>Stok Girişi - {{ p.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-2"><label>Miktar</label><input type="number" name="quantity" class="form-control" step="0.01" required></div>
+                                    <div class="mb-2"><label>Açıklama</label><input type="text" name="description" class="form-control" placeholder="Stok giriş sebebi"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-success">Stok Girişi Yap</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted">Henüz ürün yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if products.pages > 1 %}
+<nav class="mt-2">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if products.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ products.prev_num }}{% if search %}&q={{ search }}{% endif %}">«</a></li>
+        {% endif %}
+        {% for p in products.iter_pages() %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == products.page }}"><a class="page-link" href="?page={{ p }}{% if search %}&q={{ search }}{% endif %}">{{ p }}</a></li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link">…</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if products.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ products.next_num }}{% if search %}&q={{ search }}{% endif %}">»</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<div class="modal fade" id="addProductModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('stock.add_product') }}">
+                <div class="modal-header"><h5>Yeni Ürün Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Barkod <span class="text-danger">*</span></label><input type="text" name="barcode" class="form-control" required></div>
+                    <div class="mb-2"><label>Ürün Adı <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required></div>
+                    <div class="mb-2">
+                        <label>Kategori</label>
+                        <div class="input-group">
+                            <select name="category_id" class="form-select" id="addCategorySelect">
+                                <option value="">- Seçin -</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-primary" type="button" onclick="showAddCategory()" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                        <div id="addCategoryInline" style="display:none" class="mt-1 input-group">
+                            <input type="text" id="newCategoryName" class="form-control" placeholder="Kategori adı">
+                            <button class="btn btn-success" type="button" onclick="saveCategory()"><i class="bi bi-check"></i></button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="hideAddCategory()"><i class="bi bi-x"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-2"><label>Tedarikçi</label>
+                        <select name="supplier_id" class="form-select">
+                            <option value="">- Seçin -</option>
+                            {% for s in suppliers %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label>Alış Fiyatı</label><input type="number" name="purchase_price" class="form-control" value="0" step="0.01"></div>
+                        <div class="col-6 mb-2"><label>Satış Fiyatı</label><input type="number" name="sale_price" class="form-control" value="0" step="0.01"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label>Stok Miktarı</label><input type="number" name="stock_qty" class="form-control" value="0" step="0.01"></div>
+                        <div class="col-4 mb-2"><label>Min Stok</label><input type="number" name="min_stock_qty" class="form-control" value="0" step="0.01"></div>
+                        <div class="col-4 mb-2"><label>KDV %</label><input type="number" name="tax_rate" class="form-control" value="0" step="0.01"></div>
+                    </div>
+                    <div class="mb-2"><label>Birim</label>
+                            <select name="unit" class="form-select">
+                                <option value="Adet">Adet</option>
+                                <option value="Düzine">Düzine</option>
+                                <option value="Kg">Kg</option>
+                                <option value="Lt">Lt</option>
+                                <option value="Paket">Paket</option>
+                                <option value="Koli">Koli</option>
+                                <option value="Set">Set</option>
+                            </select>
+                        </div>
+                    </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Ürün Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="csvModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('stock.csv_import') }}" enctype="multipart/form-data">
+                <div class="modal-header"><h5>CSV ile Ürün Yükle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="text-muted small">CSV dosyası aşağıdaki sütunları içermelidir:</p>
+                    <code class="small">barcode, name, purchase_price, sale_price, stock_qty, min_stock_qty, category, supplier, tax_rate, unit</code>
+                    <p class="text-muted small mt-1">Türkçe sütun adları da desteklenir: Barkod, Ürün Adı, Alış Fiyatı, Satış Fiyatı, Stok, Min Stok, Kategori, Tedarikçi, KDV, Birim</p>
+                    <div class="mt-2"><input type="file" name="file" class="form-control" accept=".csv" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Yükle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterStock() {
+    const query = document.getElementById('stockSearch').value.toLowerCase();
+    const cat = document.getElementById('categoryFilter').value;
+    document.querySelectorAll('#stockTable tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const show = (!query || text.includes(query)) &&
+                     (!cat || row.querySelector('td:nth-child(3)').textContent.trim() === document.querySelector('#categoryFilter option:checked').textContent.trim());
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function exportStockExcel() {
+    const table = document.getElementById('stockTable');
+    let csv = 'Barkod,Ürün Adı,Kategori,Alış Fiyatı,Satış Fiyatı,Stok,Min Stok,Birim\n';
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const cols = row.querySelectorAll('td');
+        if (cols.length >= 8) {
+            csv += cols[0].textContent.trim() + ',' +
+                   cols[1].textContent.trim() + ',' +
+                   cols[2].textContent.trim() + ',' +
+                   cols[3].textContent.trim().replace(' ₺','') + ',' +
+                   cols[4].textContent.trim().replace(' ₺','') + ',' +
+                   cols[5].textContent.trim() + ',' +
+                   cols[6].textContent.trim() + ',' +
+                   cols[7].textContent.trim() + '\n';
+        }
+    });
+    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'stok_listesi.csv';
+    link.click();
+}
+
+function showAddCategory() {
+    document.getElementById('addCategoryInline').style.display = 'flex';
+    document.getElementById('newCategoryName').focus();
+}
+
+function hideAddCategory() {
+    document.getElementById('addCategoryInline').style.display = 'none';
+    document.getElementById('newCategoryName').value = '';
+}
+
+function saveCategory() {
+    const name = document.getElementById('newCategoryName').value.trim();
+    if (!name) { alert('Kategori adı girin'); return; }
+    const fd = new FormData(); fd.append('name', name);
+    fetch('/stock/add-category-ajax', { method: 'POST', body: fd })
+    .then(r => r.json()).then(data => {
+        if (data.success) {
+            const sel = document.getElementById('addCategorySelect');
+            const opt = document.createElement('option');
+            opt.value = data.id; opt.textContent = data.name;
+            sel.appendChild(opt); sel.value = data.id;
+            hideAddCategory();
+        } else { alert('Hata: ' + data.error); }
+    }).catch(e => alert('Hata: ' + e));
+}
+
+function showEditCategory(btn) {
+    const group = btn.closest('.input-group');
+    let inline = group.parentElement.querySelector('.edit-category-inline');
+    if (inline) { inline.style.display = inline.style.display === 'none' ? 'flex' : 'none'; if (inline.style.display !== 'none') inline.querySelector('input').focus(); return; }
+    inline = document.createElement('div');
+    inline.className = 'edit-category-inline input-group mt-1';
+    inline.innerHTML = '<input type="text" class="form-control" placeholder="Kategori adı"><button class="btn btn-success" type="button"><i class="bi bi-check"></i></button><button class="btn btn-outline-secondary" type="button"><i class="bi bi-x"></i></button>';
+    const sel = group.querySelector('select');
+    inline.querySelector('.btn-success').onclick = () => {
+        const name = inline.querySelector('input').value.trim();
+        if (!name) { alert('Kategori adı girin'); return; }
+        const fd = new FormData(); fd.append('name', name);
+        fetch('/stock/add-category-ajax', { method: 'POST', body: fd })
+        .then(r => r.json()).then(data => {
+            if (data.success) {
+                const opt = document.createElement('option');
+                opt.value = data.id; opt.textContent = data.name;
+                sel.appendChild(opt); sel.value = data.id;
+                inline.style.display = 'none'; inline.querySelector('input').value = '';
+            } else { alert('Hata: ' + data.error); }
+        });
+    };
+    inline.querySelector('.btn-outline-secondary').onclick = () => { inline.style.display = 'none'; inline.querySelector('input').value = ''; };
+    group.parentElement.appendChild(inline);
+    inline.querySelector('input').focus();
+}
+</script>
+{% endblock %}

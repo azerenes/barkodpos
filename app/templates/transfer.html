@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-arrow-left-right"></i> Şubeler Arası Transfer</h4>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">Transfer Yap</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('transfer.do_transfer') }}">
+                    <div class="mb-2">
+                        <label>Ürün</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.name }} (Stok: {{ p.stock_qty }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Gönderen Şube</label>
+                        <select name="from_branch_id" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Alan Şube</label>
+                        <select name="to_branch_id" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Miktar</label>
+                        <input type="number" name="quantity" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-send"></i> Transfer Et</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">Transfer Geçmişi</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr><th>Tarih</th><th>Ürün</th><th>Tip</th><th>Miktar</th><th>Kullanıcı</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movements %}
+                        <tr>
+                            <td><small>{{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                            <td>{{ m.product.name if m.product else '-' }}</td>
+                            <td>
+                                {% if m.type == 'transfer_out' %}<span class="badge bg-warning">Çıkış</span>
+                                {% else %}<span class="badge bg-info">Giriş</span>{% endif %}
+                            </td>
+                            <td class="fw-bold">{{ m.quantity }}</td>
+                            <td><small>{{ m.user.full_name if m.user else '-' }}</small></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted">Transfer yok</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

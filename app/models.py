@@ -1,0 +1,149 @@
+from app import db
+from datetime import datetime
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    full_name = db.Column(db.String(150))
+    role = db.Column(db.String(20), default='employee')
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Branch(db.Model):
+    __tablename__ = 'branches'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    address = db.Column(db.Text)
+    phone = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    users = db.relationship('User', backref='branch', lazy=True)
+
+class Category(db.Model):
+    __tablename__ = 'categories'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    products = db.relationship('Product', backref='category', lazy=True)
+
+class Product(db.Model):
+    __tablename__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    barcode = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'))
+    purchase_price = db.Column(db.Numeric(10,2), default=0)
+    sale_price = db.Column(db.Numeric(10,2), default=0)
+    tax_rate = db.Column(db.Numeric(5,2), default=0)
+    unit = db.Column(db.String(20), default='Adet')
+    stock_qty = db.Column(db.Numeric(10,2), default=0)
+    min_stock_qty = db.Column(db.Numeric(10,2), default=0)
+    image_url = db.Column(db.String(500))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Customer(db.Model):
+    __tablename__ = 'customers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+    address = db.Column(db.Text)
+    tax_office = db.Column(db.String(100))
+    tax_number = db.Column(db.String(50))
+    balance = db.Column(db.Numeric(10,2), default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sales = db.relationship('Sale', backref='customer', lazy=True)
+    payments = db.relationship('Payment', backref='customer', lazy=True)
+
+class Sale(db.Model):
+    __tablename__ = 'sales'
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_no = db.Column(db.String(50), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    total_amount = db.Column(db.Numeric(10,2), default=0)
+    discount = db.Column(db.Numeric(10,2), default=0)
+    tax_amount = db.Column(db.Numeric(10,2), default=0)
+    grand_total = db.Column(db.Numeric(10,2), default=0)
+    payment_method = db.Column(db.Enum('cash', 'credit_card', 'debt'), default='cash')
+    status = db.Column(db.Enum('completed', 'cancelled'), default='completed')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    items = db.relationship('SaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')
+    user = db.relationship('User', backref='sales')
+
+class SaleItem(db.Model):
+    __tablename__ = 'sale_items'
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    product_name = db.Column(db.String(200))
+    barcode = db.Column(db.String(50))
+    quantity = db.Column(db.Numeric(10,2), default=1)
+    unit_price = db.Column(db.Numeric(10,2), default=0)
+    total_price = db.Column(db.Numeric(10,2), default=0)
+    tax_rate = db.Column(db.Numeric(5,2), default=0)
+    tax_amount = db.Column(db.Numeric(10,2), default=0)
+    product = db.relationship('Product')
+
+class StockMovement(db.Model):
+    __tablename__ = 'stock_movements'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    type = db.Column(db.Enum('entry', 'exit', 'transfer_in', 'transfer_out', 'sale', 'return'), nullable=False)
+    quantity = db.Column(db.Numeric(10,2), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    product = db.relationship('Product')
+    user = db.relationship('User', backref='stock_movements')
+
+class Setting(db.Model):
+    __tablename__ = 'settings'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.Text)
+
+class Supplier(db.Model):
+    __tablename__ = 'suppliers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+    address = db.Column(db.Text)
+    tax_office = db.Column(db.String(100))
+    tax_number = db.Column(db.String(50))
+    contact_person = db.Column(db.String(100))
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    products = db.relationship('Product', backref='supplier', lazy=True)
+
+class Expense(db.Model):
+    __tablename__ = 'expenses'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
+    amount = db.Column(db.Numeric(10,2), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    payment_method = db.Column(db.Enum('cash', 'credit_card', 'bank_transfer'), default='cash')
+    expense_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref='expenses')
+
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    amount = db.Column(db.Numeric(10,2), nullable=False)
+    type = db.Column(db.Enum('payment', 'collection'), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User')

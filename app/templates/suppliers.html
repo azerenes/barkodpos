@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-truck"></i> Tedarikçiler</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal"><i class="bi bi-plus"></i> Tedarikçi Ekle</button>
+</div>
+
+<form class="row g-2 mb-3" method="GET">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Tedarikçi ara..." value="{{ search }}">
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Firma Adı</th>
+                    <th>Yetkili</th>
+                    <th>Telefon</th>
+                    <th>E-posta</th>
+                    <th>Vergi Dairesi</th>
+                    <th>Vergi No</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in suppliers %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.contact_person or '-' }}</td>
+                    <td>{{ s.phone or '-' }}</td>
+                    <td>{{ s.email or '-' }}</td>
+                    <td>{{ s.tax_office or '-' }}</td>
+                    <td>{{ s.tax_number or '-' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#editModal{{ s.id }}"><i class="bi bi-pencil"></i></button>
+                        <form method="POST" action="{{ url_for('supplier.delete_supplier', id=s.id) }}" style="display:inline"
+                              onsubmit="return confirm('{{ s.name }} silinsin mi?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="editModal{{ s.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="{{ url_for('supplier.update_supplier', id=s.id) }}">
+                                <div class="modal-header"><h5>Tedarikçi Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-2"><label>Firma Adı</label><input type="text" name="name" class="form-control" value="{{ s.name }}" required></div>
+                                    <div class="row">
+                                        <div class="col-6 mb-2"><label>Yetkili</label><input type="text" name="contact_person" class="form-control" value="{{ s.contact_person or '' }}"></div>
+                                        <div class="col-6 mb-2"><label>Telefon</label><input type="text" name="phone" class="form-control" value="{{ s.phone or '' }}"></div>
+                                    </div>
+                                    <div class="mb-2"><label>E-posta</label><input type="email" name="email" class="form-control" value="{{ s.email or '' }}"></div>
+                                    <div class="mb-2"><label>Adres</label><textarea name="address" class="form-control" rows="2">{{ s.address or '' }}</textarea></div>
+                                    <div class="row">
+                                        <div class="col-6 mb-2"><label>Vergi Dairesi</label><input type="text" name="tax_office" class="form-control" value="{{ s.tax_office or '' }}"></div>
+                                        <div class="col-6 mb-2"><label>Vergi No</label><input type="text" name="tax_number" class="form-control" value="{{ s.tax_number or '' }}"></div>
+                                    </div>
+                                    <div class="mb-2"><label>Notlar</label><textarea name="notes" class="form-control" rows="2">{{ s.notes or '' }}</textarea></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">Henüz tedarikçi yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if suppliers.pages > 1 %}
+<nav class="mt-2">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if suppliers.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ suppliers.prev_num }}{% if search %}&q={{ search }}{% endif %}">«</a></li>
+        {% endif %}
+        {% for p in suppliers.iter_pages() %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == suppliers.page }}"><a class="page-link" href="?page={{ p }}{% if search %}&q={{ search }}{% endif %}">{{ p }}</a></li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link">…</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if suppliers.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ suppliers.next_num }}{% if search %}&q={{ search }}{% endif %}">»</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<div class="modal fade" id="addSupplierModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('supplier.add_supplier') }}">
+                <div class="modal-header"><h5>Yeni Tedarikçi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Firma Adı <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required></div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label>Yetkili</label><input type="text" name="contact_person" class="form-control"></div>
+                        <div class="col-6 mb-2"><label>Telefon</label><input type="text" name="phone" class="form-control"></div>
+                    </div>
+                    <div class="mb-2"><label>E-posta</label><input type="email" name="email" class="form-control"></div>
+                    <div class="mb-2"><label>Adres</label><textarea name="address" class="form-control" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label>Vergi Dairesi</label><input type="text" name="tax_office" class="form-control"></div>
+                        <div class="col-6 mb-2"><label>Vergi No</label><input type="text" name="tax_number" class="form-control"></div>
+                    </div>
+                    <div class="mb-2"><label>Notlar</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

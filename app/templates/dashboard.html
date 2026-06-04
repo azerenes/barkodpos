@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block content %}
+{% if low_stock_products %}
+<div class="alert alert-danger alert-dismissible fade show">
+    <div class="d-flex align-items-center mb-1">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+        <strong>Stok Uyarısı!</strong> <span class="ms-1">{{ low_stock_count }} ürün kritik seviyede.</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+    <ul class="mb-0 small">
+        {% for p in low_stock_products[:5] %}
+        <li><b>{{ p.name }}</b> (Stok: {{ p.stock_qty }} / Min: {{ p.min_stock_qty }})</li>
+        {% endfor %}
+        {% if low_stock_count > 5 %}
+        <li><a href="{{ url_for('stock.stock_list') }}">ve {{ low_stock_count - 5 }} ürün daha...</a></li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-speedometer2"></i> Dashboard</h4>
+    <span class="text-muted">{{ today.strftime('%d.%m.%Y %A') }}</span>
+</div>
+
+<div class="row g-2 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center py-3">
+                <div class="h4 text-primary mb-0">{{ total_sales_today|round(2) }} ₺</div>
+                <small class="text-muted">Bugünkü Satış</small>
+                <div><span class="badge bg-primary mt-1">{{ sales_count_today }} adet</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body text-center py-3">
+                <div class="h4 text-success mb-0">{{ total_products }}</div>
+                <small class="text-muted">Toplam Ürün</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-info h-100">
+            <div class="card-body text-center py-3">
+                <div class="h4 text-info mb-0">{{ total_customers }}</div>
+                <small class="text-muted">Müşteri</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center py-3">
+                <div class="h4 text-warning mb-0">{{ low_stock_products }}</div>
+                <small class="text-muted">Azalan Stok</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Haftalık Satış Grafiği</div>
+            <div class="card-body">
+                <canvas id="weeklyChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Ödeme Yöntemleri</div>
+            <div class="card-body">
+                <canvas id="paymentPieChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Son Satışlar</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>Fiş</th><th>Tutar</th><th>Ödeme</th><th>Saat</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td><small>{{ sale.receipt_no }}</small></td>
+                                <td class="fw-bold">{{ sale.grand_total }} ₺</td>
+                                <td><span class="badge bg-secondary">{{ sale.payment_method }}</span></td>
+                                <td><small>{{ sale.created_at.strftime('%H:%M') }}</small></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">Henüz satış yok</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning"></i> Hızlı İşlemler</div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('pos.pos') }}" class="btn btn-primary"><i class="bi bi-cart"></i> Yeni Satış</a>
+                    <div class="row g-1">
+                        <div class="col-6"><a href="{{ url_for('stock.stock_list') }}" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-box"></i> Stok</a></div>
+                        <div class="col-6"><a href="{{ url_for('purchase.purchase') }}" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-truck"></i> Alış</a></div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="col-6"><a href="{{ url_for('customer.customer_list') }}" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-people"></i> Cari</a></div>
+                        <div class="col-6"><a href="{{ url_for('cash.cash_register') }}" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-safe"></i> Kasa</a></div>
+                    </div>
+                    <a href="{{ url_for('report.reports') }}" class="btn btn-outline-primary"><i class="bi bi-bar-chart"></i> Raporlar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='lib/chart.umd.min.js') }}"></script>
+<script>
+fetch('/report/weekly-data')
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Satış (₺)',
+                    data: data.totals,
+                    backgroundColor: '#0d6efd',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    });
+
+fetch('/report/payment-data')
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById('paymentPieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Nakit', 'Kart', 'Veresiye'],
+                datasets: [{
+                    data: [data.cash, data.card, data.debt],
+                    backgroundColor: ['#198754', '#0dcaf0', '#ffc107'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    });
+</script>
+{% endblock %}

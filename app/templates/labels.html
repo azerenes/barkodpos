@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-upc-scan"></i> Barkod Etiketi Bas</h4>
+    <button class="btn btn-primary" onclick="printLabels()"><i class="bi bi-printer"></i> Seçilileri Yazdır</button>
+</div>
+
+<form class="row g-2 mb-3" method="GET">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Ürün ara..." value="{{ search }}">
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+
+<div class="row" id="labelGrid">
+    {% for p in products %}
+    <div class="col-6 col-md-3 col-lg-2 mb-2">
+        <div class="card label-card" data-product-id="{{ p.id }}">
+            <div class="card-body text-center p-2" style="font-size:11px;">
+                <div class="form-check mb-1">
+                    <input class="form-check-input label-check" type="checkbox" value="{{ p.id }}" id="chk{{ p.id }}" checked>
+                    <label class="form-check-label small" for="chk{{ p.id }}">{{ p.name[:20] }}</label>
+                </div>
+                <div style="font-family:'Libre Barcode 39',monospace;font-size:20px;letter-spacing:2px;">*{{ p.barcode }}*</div>
+                <div class="fw-bold mt-1">{{ p.sale_price }} ₺</div>
+                <input type="number" class="form-control form-control-sm mt-1" value="2" min="1" max="20" style="width:55px;display:inline-block;" title="Adet">
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted">Ürün bulunamadı</div>
+    {% endfor %}
+</div>
+</div>
+
+<div id="printArea" style="display:none;"></div>
+
+<style>
+@media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: absolute; left: 0; top: 0; display: block !important; }
+    .label-print { width: 50mm; height: 30mm; border: 1px dashed #ccc; display: inline-block; text-align: center; padding: 5px; font-size: 10px; page-break-inside: avoid; }
+}
+</style>
+
+<script>
+function printLabels() {
+    const checked = document.querySelectorAll('.label-check:checked');
+    if (checked.length === 0) { alert('En az bir ürün seçin'); return; }
+    let html = '';
+    checked.forEach(chk => {
+        const card = chk.closest('.label-card');
+        const name = card.querySelector('.form-check-label').textContent.trim();
+        const barcode = card.querySelector('[style*="Libre"]').textContent.trim();
+        const price = card.querySelector('.fw-bold').textContent.trim();
+        const qty = parseInt(card.querySelector('input[type=number]').value) || 2;
+        for (let i = 0; i < qty; i++) {
+            html += `<div class="label-print">
+                <div style="font-weight:bold;font-size:11px;">${name}</div>
+                <div style="font-family:'Libre Barcode 39',monospace;font-size:22px;margin:3px 0;">${barcode}</div>
+                <div style="font-size:12px;font-weight:bold;">${price}</div>
+            </div>`;
+        }
+    });
+    document.getElementById('printArea').innerHTML = html;
+    window.print();
+}
+</script>
+{% endblock %}

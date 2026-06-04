@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-person-badge"></i> Personel Yönetimi</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal"><i class="bi bi-plus"></i> Personel Ekle</button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Şube</th><th>Durum</th></tr>
+            </thead>
+            <tbody>
+                {% for e in employees %}
+                <tr>
+                    <td>{{ e.username }}</td>
+                    <td>{{ e.full_name or '-' }}</td>
+                    <td>{{ e.branch.name if e.branch else '-' }}</td>
+                    <td><span class="badge bg-{{ 'success' if e.is_active else 'danger' }}">{{ 'Aktif' if e.is_active else 'Pasif' }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">Personel yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmployeeModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('employee.add_employee') }}">
+                <div class="modal-header"><h5>Yeni Personel</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Kullanıcı Adı</label><input type="text" name="username" class="form-control" required></div>
+                    <div class="mb-2"><label>Ad Soyad</label><input type="text" name="full_name" class="form-control" required></div>
+                    <div class="mb-2"><label>Şube</label>
+                        <select name="branch_id" class="form-select">
+                            <option value="">- Şube Seçin -</option>
+                            {% for b in branches %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card" id="receiptArea">
+            <div class="card-body text-center" style="font-family:monospace;font-size:13px;">
+                <h5 class="mb-1">BarkodPOS</h5>
+                <small>Barkodlu Satış ve Stok Sistemi</small>
+                <hr class="my-2">
+
+                <div class="text-start mb-2">
+                    <small><strong>Fiş No:</strong> {{ sale.receipt_no }}</small><br>
+                    <small><strong>Tarih:</strong> {{ sale.created_at.strftime('%d.%m.%Y %H:%M') }}</small><br>
+                    {% if sale.customer %}
+                    <small><strong>Müşteri:</strong> {{ sale.customer.name }}</small><br>
+                    {% endif %}
+                    <small><strong>Kasiyer:</strong> {{ sale.user.full_name or sale.user.username if sale.user else '-' }}</small>
+                </div>
+
+                <hr class="my-2">
+                <div class="row fw-bold small">
+                    <div class="col-6 text-start">Ürün</div>
+                    <div class="col-2 text-end">Adet</div>
+                    <div class="col-4 text-end">Tutar</div>
+                </div>
+                <hr class="my-1">
+
+                {% for item in items %}
+                <div class="row small">
+                    <div class="col-6 text-start text-truncate">{{ item.product_name }}</div>
+                    <div class="col-2 text-end">{{ item.quantity }}</div>
+                    <div class="col-4 text-end">{{ item.total_price }} ₺</div>
+                </div>
+                {% endfor %}
+
+                <hr class="my-2">
+                <div class="row">
+                    <div class="col-6 text-start"><strong>Ara Toplam</strong></div>
+                    <div class="col-6 text-end">{{ sale.total_amount }} ₺</div>
+                </div>
+                {% if sale.tax_amount > 0 %}
+                <div class="row">
+                    <div class="col-6 text-start"><strong>KDV</strong></div>
+                    <div class="col-6 text-end">{{ sale.tax_amount }} ₺</div>
+                </div>
+                {% endif %}
+                {% if sale.discount > 0 %}
+                <div class="row">
+                    <div class="col-6 text-start"><strong>İndirim</strong></div>
+                    <div class="col-6 text-end">-{{ sale.discount }} ₺</div>
+                </div>
+                {% endif %}
+                <div class="row fw-bold">
+                    <div class="col-6 text-start h5">GENEL TOPLAM</div>
+                    <div class="col-6 text-end h5">{{ sale.grand_total }} ₺</div>
+                </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <span class="badge bg-secondary">{{ sale.payment_method }}</span>
+                    </div>
+                </div>
+
+                <hr class="my-2">
+                <div id="qrcode" style="display:inline-block;background:#fff;padding:5px;margin-bottom:5px;"></div>
+                <br>
+                <small class="text-muted">İyi günler dileriz!</small>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Yazdır</button>
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal"><i class="bi bi-envelope"></i> E-posta</button>
+            <a href="{{ url_for('pos.pos') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> POS</a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="emailModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('receipt.send_email', sale_id=sale.id) }}">
+                <div class="modal-header"><h5>Fişi E-posta ile Gönder</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>E-posta Adresi</label><input type="email" name="email" class="form-control" required placeholder="musteri@ornek.com"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='lib/qrcode.min.js') }}"></script>
+<script>
+new QRCode(document.getElementById('qrcode'), { text: '{{ host }}{{ url_for("receipt.view_receipt", sale_id=sale.id) }}', width: 80, height: 80 });
+</script>
+
+<style>
+@media print {
+    .navbar, .container-fluid > .text-center, .btn { display: none !important; }
+    .card { box-shadow: none !important; border: 1px dashed #ccc !important; }
+}
+</style>
+{% endblock %}

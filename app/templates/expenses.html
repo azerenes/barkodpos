@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-wallet2"></i> Gider Takibi</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal"><i class="bi bi-plus"></i> Gider Ekle</button>
+</div>
+
+<form class="row g-2 mb-3" method="GET">
+    <div class="col-md-2">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+            <option value="">Tüm Kategoriler</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {{ 'selected' if selected_cat == cat }}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Kategori</th>
+                    <th>Açıklama</th>
+                    <th>Tutar</th>
+                    <th>Ödeme</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expenses %}
+                <tr>
+                    <td>{{ e.expense_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td><span class="badge bg-secondary">{{ e.category }}</span></td>
+                    <td>{{ e.description or '-' }}</td>
+                    <td class="fw-bold text-danger">{{ e.amount }} ₺</td>
+                    <td>{{ e.payment_method }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('expense.delete_expense', id=e.id) }}" style="display:inline"
+                              onsubmit="return confirm('Bu gider silinsin mi?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">Henüz gider yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if expenses.pages > 1 %}
+<nav class="mt-2">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if expenses.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ expenses.prev_num }}{% if selected_cat %}&category={{ selected_cat }}{% endif %}">«</a></li>
+        {% endif %}
+        {% for p in expenses.iter_pages() %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == expenses.page }}"><a class="page-link" href="?page={{ p }}{% if selected_cat %}&category={{ selected_cat }}{% endif %}">{{ p }}</a></li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link">…</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if expenses.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ expenses.next_num }}{% if selected_cat %}&category={{ selected_cat }}{% endif %}">»</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<div class="modal fade" id="addExpenseModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('expense.add_expense') }}">
+                <div class="modal-header"><h5>Yeni Gider</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Kategori</label>
+                        <select name="category" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2"><label>Tutar (₺) <span class="text-danger">*</span></label><input type="number" name="amount" class="form-control" step="0.01" required></div>
+                    <div class="mb-2"><label>Açıklama</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+                    <div class="mb-2"><label>Ödeme Yöntemi</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="cash">Nakit</option>
+                            <option value="credit_card">Kredi Kartı</option>
+                            <option value="bank_transfer">Havale/EFT</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

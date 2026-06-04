@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-bar-chart"></i> Raporlar</h4>
+    <div>
+        <div class="btn-group">
+            <a href="?period=today" class="btn btn-sm {{ 'btn-primary' if period == 'today' else 'btn-outline-primary' }}">Bugün</a>
+            <a href="?period=week" class="btn btn-sm {{ 'btn-primary' if period == 'week' else 'btn-outline-primary' }}">Bu Hafta</a>
+            <a href="?period=month" class="btn btn-sm {{ 'btn-primary' if period == 'month' else 'btn-outline-primary' }}">Bu Ay</a>
+            <a href="?period=year" class="btn btn-sm {{ 'btn-primary' if period == 'year' else 'btn-outline-primary' }}">Bu Yıl</a>
+        </div>
+        <button class="btn btn-sm btn-success ms-1" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <div class="h4 text-primary">{{ total_sales|round(2) }} ₺</div>
+                <small>Toplam Satış</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <div class="h4 text-success">{{ total_count }}</div>
+                <small>Satış Adedi</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <div class="h4 text-info">{{ avg_sale|round(2) }} ₺</div>
+                <small>Ortalama Sepet</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <div class="h4 text-{{ 'success' if gross_profit >= 0 else 'danger' }}">{{ gross_profit|round(2) }} ₺</div>
+                <small>Brüt Kâr</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <div class="h4 text-{{ 'success' if net_profit >= 0 else 'danger' }}">{{ net_profit|round(2) }} ₺</div>
+                <small>Net Kâr</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Ödeme Yöntemleri Dağılımı</div>
+            <div class="card-body">
+                <canvas id="paymentChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">En Çok Satan Ürünler</div>
+            <div class="card-body">
+                <canvas id="productChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body text-center py-2">
+                <div class="h5 text-success">{{ cash_total|round(2) }} ₺</div>
+                <small>Nakit ({{ cash_count }} adet)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info h-100">
+            <div class="card-body text-center py-2">
+                <div class="h5 text-info">{{ card_total|round(2) }} ₺</div>
+                <small>Kredi Kartı</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center py-2">
+                <div class="h5 text-warning">{{ debt_total|round(2) }} ₺</div>
+                <small>Veresiye</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-secondary h-100">
+            <div class="card-body text-center py-2">
+                <div class="h5">{{ total_expenses|round(2) }} ₺</div>
+                <small>Giderler</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Satış Listesi</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0" id="salesTable">
+            <thead>
+                <tr><th>Fiş</th><th>Müşteri</th><th>Tutar</th><th>İndirim</th><th>Ödeme</th><th>Tarih</th></tr>
+            </thead>
+            <tbody>
+                {% for s in sales %}
+                <tr>
+                    <td><small>{{ s.receipt_no }}</small></td>
+                    <td>{{ s.customer.name if s.customer else '-' }}</td>
+                    <td class="fw-bold">{{ s.grand_total }} ₺</td>
+                    <td>{{ s.discount }} ₺</td>
+                    <td><span class="badge bg-secondary">{{ s.payment_method }}</span></td>
+                    <td><small>{{ s.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">Satış yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='lib/chart.umd.min.js') }}"></script>
+<script>
+const paymentLabels = [];
+const paymentData = [];
+const paymentColors = {cash: '#198754', credit_card: '#0dcaf0', debt: '#ffc107'};
+{% for ps in payment_stats %}
+paymentLabels.push('{{ "Nakit" if ps.payment_method == "cash" else "Kart" if ps.payment_method == "credit_card" else "Veresiye" }}');
+paymentData.push({{ ps.total|round(2) }});
+{% endfor %}
+
+new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
+    data: {
+        labels: paymentLabels,
+        datasets: [{
+            data: paymentData,
+            backgroundColor: ['#198754', '#0dcaf0', '#ffc107'],
+            borderWidth: 0
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+const prodLabels = [];
+const prodData = [];
+{% for ps in product_stats[:10] %}
+prodLabels.push('{{ ps.name[:20] }}');
+prodData.push({{ ps.total_amount|round(2) }});
+{% endfor %}
+
+new Chart(document.getElementById('productChart'), {
+    type: 'bar',
+    data: {
+        labels: prodLabels,
+        datasets: [{
+            label: 'Satış Tutarı',
+            data: prodData,
+            backgroundColor: '#0d6efd',
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+function exportExcel() {
+    const table = document.getElementById('salesTable');
+    let csv = 'Fiş No,Müşteri,Tutar,İndirim,Ödeme,Tarih\n';
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const cols = row.querySelectorAll('td');
+        if (cols.length >= 6) {
+            csv += cols[0].textContent.trim() + ',' +
+                   cols[1].textContent.trim() + ',' +
+                   cols[2].textContent.trim().replace(' ₺','') + ',' +
+                   cols[3].textContent.trim() + ',' +
+                   cols[4].textContent.trim() + ',' +
+                   cols[5].textContent.trim() + '\n';
+        }
+    });
+    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'satis_raporu_{{ period }}.csv';
+    link.click();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-upc-scan"></i> Barkod / Ürün Ara</span>
+                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#recentSalesModal">
+                    <i class="bi bi-clock-history"></i> Son Satışlar
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-2">
+                    <input type="text" id="barcodeInput" class="form-control form-control-lg"
+                           placeholder="Barkod okutun veya ürün adı yazın..." autofocus>
+                    <button class="btn btn-primary" onclick="searchProduct()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="searchResults" class="list-group mb-2" style="display:none;max-height:200px;overflow-y:auto;"></div>
+                <div id="searchResult" class="mb-2"></div>
+                <button class="btn btn-outline-warning btn-sm w-100 mt-1" data-bs-toggle="modal" data-bs-target="#quickSaleModal">
+                    <i class="bi bi-lightning"></i> Hızlı Satış (İsimsiz Ürün)
+                </button>
+            </div>
+        </div>
+
+        <div class="card mt-2">
+            <div class="card-header"><i class="bi bi-grid"></i> Hızlı Ürünler</div>
+                <div class="card-body py-2" id="quickProducts">
+                    <div class="mb-1">
+                        <select id="quickCategoryFilter" class="form-select form-select-sm" style="width:auto;display:inline-block" onchange="filterQuickProducts()">
+                            <option value="">Tümü</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted ms-1" id="quickCount">{{ products|length }} ürün</small>
+                    </div>
+                    <div id="quickProductGrid">
+                    {% for p in products[:30] %}
+                    <button class="btn btn-outline-primary btn-sm m-1 quick-product"
+                            data-id="{{ p.id }}" data-barcode="{{ p.barcode }}"
+                            data-name="{{ p.name }}" data-price="{{ p.sale_price }}"
+                            data-cat="{{ p.category_id }}">
+                        {{ p.name[:20] }}<br><small>{{ p.sale_price }} ₺</small>
+                    </button>
+                    {% endfor %}
+                    </div>
+                </div>
+        </div>
+
+        <div class="card mt-2">
+            <div class="card-header"><i class="bi bi-receipt"></i> Sepet</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0" id="cartTable">
+                    <thead>
+                        <tr>
+                            <th>Ürün</th>
+                            <th>Fiyat</th>
+                            <th>Adet</th>
+                            <th>Toplam</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label class="form-label small">İndirim (₺)</label>
+                        <input type="number" id="discountInput" class="form-control form-control-sm" value="0" min="0" step="0.25">
+                    </div>
+                    <div class="col-8">
+                        <label class="form-label small">Müşteri</label>
+                        <select id="customerSelect" class="form-select form-select-sm">
+                            <option value="">- Müşteri Seçin -</option>
+                            {% for c in customers %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-calculator"></i> Ödeme</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">Ara Toplam</small>
+                    <div class="h3" id="subtotalDisplay">0.00 ₺</div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">İndirim</small>
+                    <div class="h5" id="discountDisplay">0.00 ₺</div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Genel Toplam</small>
+                    <div class="display-5 text-primary fw-bold" id="grandTotalDisplay">0.00 ₺</div>
+                </div>
+
+                <div class="row g-1 mb-3 text-center">
+                    <div class="col-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="addQtyItem(1)">+1</button></div>
+                    <div class="col-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="addQtyItem(5)">+5</button></div>
+                    <div class="col-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="addQtyItem(10)">+10</button></div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="payment" id="payCash" value="cash" checked>
+                        <label class="btn btn-outline-success" for="payCash"><i class="bi bi-cash"></i> Nakit</label>
+                        <input type="radio" class="btn-check" name="payment" id="payCard" value="credit_card">
+                        <label class="btn btn-outline-info" for="payCard"><i class="bi bi-credit-card"></i> Kart</label>
+                        <input type="radio" class="btn-check" name="payment" id="payDebt" value="debt">
+                        <label class="btn btn-outline-warning" for="payDebt"><i class="bi bi-journal"></i> Veresiye</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg w-100" onclick="completeSale()">
+                    <i class="bi bi-check-circle"></i> Satışı Tamamla
+                </button>
+                <button class="btn btn-outline-danger w-100 mt-1" onclick="clearCart()">
+                    <i class="bi bi-trash"></i> Sepeti Temizle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="recentSalesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="bi bi-clock-history"></i> Son Satışlar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="recentSalesBody">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Fiş</th><th>Müşteri</th><th>Tutar</th><th>Ödeme</th><th>Tarih</th><th></th></tr></thead>
+                    <tbody>
+                        {% for s in recent_sales %}
+                        <tr>
+                            <td><small>{{ s.receipt_no }}</small></td>
+                            <td>{{ s.customer.name if s.customer else '-' }}</td>
+                            <td class="fw-bold">{{ s.grand_total }} ₺</td>
+                            <td><span class="badge bg-secondary">{{ s.payment_method }}</span></td>
+                            <td><small>{{ s.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                            <td><button class="btn btn-sm btn-outline-danger" onclick="returnSale({{ s.id }})">İade</button></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">Satış yok</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="quickSaleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="bi bi-lightning"></i> Hızlı Satış</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Ürün Adı</label>
+                    <input type="text" id="quickSaleName" class="form-control" placeholder="Örn: Çay bardağı" autocomplete="off">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Satış Fiyatı (₺)</label>
+                    <input type="number" id="quickSalePrice" class="form-control" placeholder="0.00" step="0.25" min="0.25">
+                </div>
+                <div id="quickSaleError" class="text-danger small"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button class="btn btn-warning" onclick="doQuickSale()">
+                    <i class="bi bi-cart-plus"></i> Sepete Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+let cart = [];
+let lastSelectedIndex = -1;
+
+function searchProduct() {
+    const q = document.getElementById('barcodeInput').value.trim();
+    if (!q) { document.getElementById('searchResults').style.display = 'none'; return; }
+
+    fetch(`/pos/search-product?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(products => {
+            const container = document.getElementById('searchResults');
+            if (products.length === 0) {
+                container.style.display = 'none';
+                showError('Ürün bulunamadı');
+                return;
+            }
+            if (products.length === 1) {
+                addToCart(products[0]);
+                document.getElementById('barcodeInput').value = '';
+                container.style.display = 'none';
+                document.getElementById('barcodeInput').focus();
+                return;
+            }
+            container.innerHTML = products.map((p, i) =>
+                `<button class="list-group-item list-group-item-action py-1" onclick="selectProduct(${i})" data-id="${p.id}">
+                    <strong>${esc(p.name)}</strong> <span class="badge bg-primary">${p.price} ₺</span>
+                    <small class="text-muted">Stok: ${esc(p.stock)}</small>
+                    <small class="text-muted">(${esc(p.barcode)})</small>
+                </button>`
+            ).join('');
+            window._searchProducts = products;
+            container.style.display = 'block';
+        });
+}
+
+function selectProduct(idx) {
+    const products = window._searchProducts || [];
+    if (products[idx]) {
+        addToCart(products[idx]);
+        document.getElementById('barcodeInput').value = '';
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('barcodeInput').focus();
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('searchResult');
+    el.innerHTML = `<div class="alert alert-danger py-1">${msg}</div>`;
+    setTimeout(() => el.innerHTML = '', 2000);
+}
+
+function addToCart(product) {
+    const existing = cart.find(i => i.product_id === product.id);
+    if (existing) {
+        existing.qty += 1;
+        existing.total = existing.qty * existing.price;
+    } else {
+        cart.push({
+            product_id: product.id,
+            barcode: product.barcode,
+            name: product.name,
+            price: product.price,
+            qty: 1,
+            total: product.price
+        });
+    }
+    renderCart();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    renderCart();
+}
+
+function updateQty(index, qty) {
+    qty = parseFloat(qty);
+    if (isNaN(qty) || qty <= 0) { removeFromCart(index); return; }
+    cart[index].qty = qty;
+    cart[index].total = qty * cart[index].price;
+    renderCart();
+}
+
+function addQtyItem(amount) {
+    if (cart.length === 0) return;
+    const last = cart[cart.length - 1];
+    last.qty += amount;
+    last.total = last.qty * last.price;
+    renderCart();
+}
+
+function renderCart() {
+    const tbody = document.getElementById('cartBody');
+    tbody.innerHTML = '';
+    let subtotal = 0;
+    cart.forEach((item, i) => {
+        subtotal += item.total;
+        tbody.innerHTML += `
+            <tr>
+                <td>${esc(item.name)}</td>
+                <td>${item.price.toFixed(2)}</td>
+                <td><input type="number" class="form-control form-control-sm" style="width:65px"
+                    value="${item.qty}" min="0.5" step="0.5" onchange="updateQty(${i}, this.value)"></td>
+                <td>${item.total.toFixed(2)} ₺</td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeFromCart(${i})"><i class="bi bi-x"></i></button></td>
+            </tr>`;
+    });
+    if (cart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Sepet boş</td></tr>';
+    }
+    updateTotals(subtotal);
+}
+
+function updateTotals(subtotal) {
+    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+    const grandTotal = Math.max(0, subtotal - discount);
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' ₺';
+    document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' ₺';
+    document.getElementById('grandTotalDisplay').textContent = grandTotal.toFixed(2) + ' ₺';
+}
+
+document.getElementById('discountInput').addEventListener('input', () => {
+    const subtotal = cart.reduce((s, i) => s + i.total, 0);
+    updateTotals(subtotal);
+});
+
+function completeSale() {
+    if (cart.length === 0) { alert('Sepet boş'); return; }
+
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+    const data = {
+        items: cart,
+        customer_id: document.getElementById('customerSelect').value || null,
+        payment_method: paymentMethod,
+        discount: parseFloat(document.getElementById('discountInput').value) || 0
+    };
+
+    fetch('/pos/complete-sale', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+                        if (result.success) {
+                            if (confirm(`Satış tamamlandı!\nFiş: ${result.receipt_no}\nTutar: ${result.grand_total.toFixed(2)} ₺\n\nFiş yazdırmak ister misiniz?`)) {
+                                window.open(`/receipt/${result.sale_id}`, '_blank');
+                            }
+                            clearCart();
+                        } else {
+                            alert('Hata: ' + result.error);
+                        }
+    });
+}
+
+function clearCart() {
+    cart = [];
+    document.getElementById('discountInput').value = '0';
+    renderCart();
+}
+
+function doQuickSale() {
+    const name = document.getElementById('quickSaleName').value.trim();
+    const price = parseFloat(document.getElementById('quickSalePrice').value);
+    const errEl = document.getElementById('quickSaleError');
+    if (!name) { errEl.textContent = 'Ürün adı girin'; return; }
+    if (!price || price <= 0) { errEl.textContent = 'Geçerli bir fiyat girin'; return; }
+    errEl.textContent = '';
+
+    document.getElementById('doQuickSale').disabled = true;
+    document.getElementById('doQuickSale').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch('/pos/quick-sale', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: name, price: price})
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.error) {
+            errEl.textContent = result.error;
+            document.getElementById('doQuickSale').disabled = false;
+            document.getElementById('doQuickSale').innerHTML = '<i class="bi bi-cart-plus"></i> Sepete Ekle';
+            return;
+        }
+        addToCart({id: result.id, barcode: result.barcode, name: result.name, price: result.price});
+        document.getElementById('quickSaleName').value = '';
+        document.getElementById('quickSalePrice').value = '';
+        document.getElementById('barcodeInput').focus();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleModal'));
+        modal.hide();
+        document.getElementById('doQuickSale').disabled = false;
+        document.getElementById('doQuickSale').innerHTML = '<i class="bi bi-cart-plus"></i> Sepete Ekle';
+    });
+}
+
+function returnSale(saleId) {
+    if (!confirm('Bu satışı iade etmek istediğinize emin misiniz?')) return;
+
+    fetch('/pos/return', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sale_id: saleId, items: [{product_id: 0, qty: 0, price: 0}]})
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(`İade tamamlandı!\nİade Tutarı: ${result.refund.toFixed(2)} ₺`);
+            location.reload();
+        } else {
+            alert('Hata: ' + result.error);
+        }
+    });
+}
+
+document.getElementById('barcodeInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchProduct();
+});
+
+document.getElementById('barcodeInput').addEventListener('input', function() {
+    if (this.value.length >= 2) searchProduct();
+});
+
+document.querySelectorAll('.quick-product').forEach(btn => {
+    btn.addEventListener('click', function() {
+        addToCart({
+            id: this.dataset.id,
+            barcode: this.dataset.barcode,
+            name: this.dataset.name,
+            price: parseFloat(this.dataset.price)
+        });
+    });
+});
+
+function filterQuickProducts() {
+    const catId = document.getElementById('quickCategoryFilter').value;
+    document.querySelectorAll('.quick-product').forEach(btn => {
+        btn.style.display = (!catId || btn.dataset.cat === catId) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

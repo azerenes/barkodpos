@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-people"></i> Cari Hesap</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal"><i class="bi bi-plus"></i> Müşteri Ekle</button>
+</div>
+
+<form class="row g-2 mb-3" method="GET">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Müşteri ara..." value="{{ search }}">
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>Telefon</th>
+                    <th>E-posta</th>
+                    <th>Bakiye</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in customers %}
+                <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.phone or '-' }}</td>
+                    <td>{{ c.email or '-' }}</td>
+                    <td class="fw-bold {{ 'text-danger' if c.balance > 0 else 'text-success' }}">
+                        {{ c.balance }} ₺
+                    </td>
+                    <td>
+                        <a href="{{ url_for('customer.customer_detail', id=c.id) }}" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">Henüz müşteri yok</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if customers.pages > 1 %}
+<nav class="mt-2">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if customers.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ customers.prev_num }}{% if search %}&q={{ search }}{% endif %}">«</a></li>
+        {% endif %}
+        {% for p in customers.iter_pages() %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == customers.page }}"><a class="page-link" href="?page={{ p }}{% if search %}&q={{ search }}{% endif %}">{{ p }}</a></li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link">…</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if customers.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ customers.next_num }}{% if search %}&q={{ search }}{% endif %}">»</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<div class="modal fade" id="addCustomerModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('customer.add_customer') }}">
+                <div class="modal-header"><h5>Yeni Müşteri</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Ad Soyad <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required></div>
+                    <div class="mb-2"><label>Telefon</label><input type="text" name="phone" class="form-control"></div>
+                    <div class="mb-2"><label>E-posta</label><input type="email" name="email" class="form-control"></div>
+                    <div class="mb-2"><label>Adres</label><textarea name="address" class="form-control" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label>Vergi Dairesi</label><input type="text" name="tax_office" class="form-control"></div>
+                        <div class="col-6 mb-2"><label>Vergi No</label><input type="text" name="tax_number" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

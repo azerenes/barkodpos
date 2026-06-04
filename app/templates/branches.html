@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-building"></i> Şube Yönetimi</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBranchModal"><i class="bi bi-plus"></i> Şube Ekle</button>
+</div>
+
+<div class="row">
+    {% for b in branches %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5><i class="bi bi-building"></i> {{ b.name }}</h5>
+                <p class="mb-1"><small>{{ b.address or 'Adres belirtilmemiş' }}</small></p>
+                <p class="mb-0"><small>{{ b.phone or 'Telefon belirtilmemiş' }}</small></p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12"><p class="text-muted text-center">Henüz şube eklenmemiş</p></div>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="addBranchModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('branch.add_branch') }}">
+                <div class="modal-header"><h5>Yeni Şube</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Şube Adı</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="mb-2"><label>Adres</label><textarea name="address" class="form-control" rows="2"></textarea></div>
+                    <div class="mb-2"><label>Telefon</label><input type="text" name="phone" class="form-control"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

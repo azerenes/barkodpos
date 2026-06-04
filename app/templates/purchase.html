@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-truck"></i> Alış Fişi / Stok Hareketleri</h4>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Stok Girişi</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('purchase.add_stock') }}">
+                    <div class="mb-2">
+                        <label>Ürün</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.name }} ({{ p.barcode }}) - Stok: {{ p.stock_qty }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Miktar</label>
+                        <input type="number" name="quantity" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="mb-2">
+                        <label>Alış Fiyatı (opsiyonel)</label>
+                        <input type="number" name="purchase_price" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="mb-2">
+                        <label>Açıklama</label>
+                        <input type="text" name="description" class="form-control" placeholder="Tedarikçi adı vb.">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-circle"></i> Stok Girişi</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header text-danger">Stok Çıkışı</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('purchase.remove_stock') }}">
+                    <div class="mb-2">
+                        <label>Ürün</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="">- Seçin -</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.name }} (Stok: {{ p.stock_qty }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Miktar</label>
+                        <input type="number" name="quantity" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="mb-2">
+                        <label>Açıklama</label>
+                        <input type="text" name="description" class="form-control" placeholder="Çıkış sebebi">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100"><i class="bi bi-dash-circle"></i> Stok Çıkışı</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Son Stok Hareketleri</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr><th>Tarih</th><th>Ürün</th><th>Tip</th><th>Miktar</th><th>Kullanıcı</th><th>Açıklama</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movements %}
+                        <tr>
+                            <td><small>{{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                            <td>{{ m.product.name if m.product else '-' }}</td>
+                            <td>
+                                {% if m.type == 'entry' %}<span class="badge bg-success">Giriş</span>
+                                {% elif m.type == 'exit' %}<span class="badge bg-danger">Çıkış</span>
+                                {% elif m.type == 'sale' %}<span class="badge bg-primary">Satış</span>
+                                {% elif m.type == 'return' %}<span class="badge bg-info">İade</span>
+                                {% else %}<span class="badge bg-secondary">{{ m.type }}</span>{% endif %}
+                            </td>
+                            <td class="fw-bold">{{ m.quantity }}</td>
+                            <td><small>{{ m.user.full_name if m.user else '-' }}</small></td>
+                            <td><small>{{ m.description or '-' }}</small></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">Hareket yok</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
