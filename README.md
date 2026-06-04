@@ -19,13 +19,13 @@
 
 | Modül | Ne İşe Yarar |
 |-------|-------------|
-| **🛒 POS Satış** | Barkod okut, ürün seç, hızlı satış yap. Nakit, Kart, Veresiye — 3 ödeme tipi. |
+| **🛒 POS Satış** | Barkod okut, ürün seç, hızlı satış yap. Nakit ve Kart ödeme desteği. |
 | **📦 Stok Yönetimi** | Ürün ekle, düzenle, stok gir/çık yap, CSV'den toplu yükle. Düzine/Set birim desteği. |
 | **🏷️ Barkod Etiketi** | Tek veya toplu barkod etiketi bas. |
-| **👥 Müşteri Takibi** | Müşteri kartı, borç/alacak, veresiye satış yönetimi. |
+| **👥 Müşteri Takibi** | Müşteri kartı, borç/alacak, tahsilat/ödeme yönetimi. |
 | **📊 Raporlama** | Günlük/haftalık/aylık satış raporları, Kâr-Zarar analizi, grafiklerle görselleştirme. |
 | **🧾 Fiş / Fatura** | Termal tarzda yazdırılabilir fiş. QR kodlu. E-posta ile gönderme. |
-| **💵 Kasa Yönetimi** | Günlük kasa özeti: nakit, kart, veresiye, gider dağılımı. |
+| **💵 Kasa Yönetimi** | Günlük kasa özeti: nakit, kart ve gider dağılımı. |
 | **🔄 Transfer** | Şubeler arası stok transferi. |
 | **🏭 Tedarikçi Yönetimi** | Tedarikçi ekle/düzenle, tedarikçiye bağlı ürünleri gör. |
 | **📉 Gider Takibi** | Kategorize edilmiş gider kaydı ve raporlaması. |
@@ -63,34 +63,7 @@ cd C:\BarkodPOS
 | **Depolama** | 500 MB boş alan |
 | **Ekran** | 1280×720 veya üzeri |
 
----
 
-## 🗺️ Yol Haritası — Gelecek Özellikler
-
-Aşağıdaki özellikler sırayla eklenecektir:
-
-### 🔜 1. Aşama — Temel İyileştirmeler
-- [ ] **ESC/POS Termal Yazıcı Desteği** — Doğrudan termal yazıcıya fiş basımı
-- [ ] **Hızlı Satış (İsimsiz Ürün)** — Barkodsuz ürünleri anlık fiyat girerek satma
-- [ ] **Kısayol Tuşları** — F1-F12 ile hızlı işlemler
-
-### 🔜 2. Aşama — Stok & Muhasebe
-- [ ] **Stok Sayım Modülü** — Sayım başlat, farkı raporla, envanter güncelle
-- [ ] **Alış Faturası Kaydı** — Tedarikçiden alınan fatura bilgilerini kaydetme
-- [ ] **Fiyat Değişiklik Geçmişi** — Ürün fiyatlarındaki tüm değişikliklerin log'u
-
-### 🔜 3. Aşama — Kasa & Cari
-- [ ] **Kasa Açılış/Kapanış** — Günlük kasa sayımı, açılış bakiyesi
-- [ ] **Müşteri Hesap Ekstresi** — Müşteri bazında tüm hareket dökümü
-- [ ] **Çoklu Fiyat (Toptan/Perakende)** — Aynı ürün için farklı fiyat kademeleri
-
-### 🔜 4. Aşama — Gelişmiş Özellikler
-- [ ] **Reçete / Set Ürünler** — İçindekilerden oluşan paket ürün tanımlama
-- [ ] **Karanlık Mod (Dark Mode)** — Göz yormayan arayüz teması
-- [ ] **Yedekten Geri Yükleme** — Geçmiş yedeklerden veritabanı kurtarma
-- [ ] **Çoklu Döviz Desteği** — $ / € / ₺ ile satış ve raporlama
-
----
 
 ## 📸 Ekran Görüntüleri
 
@@ -115,9 +88,6 @@ C: Ayarlar → Yedekleme bölümünden manuel yedek alabilirsiniz. Ayrıca her g
 
 **S: Güncelleme nasıl çalışır?**  
 C: Ayarlar → Güncelleme bölümünden "Kontrol Et"e tıklayın. Yeni sürüm varsa tek tıkla güncelleyin. Uygulama kendini yeniler.
-
-**S: Şubeler arası veri paylaşımı?**  
-C: Şu an için her şube kendi bilgisayarında çalışır. Merkezi sunucu versiyonu yol haritasında.
 
 ---
 
@@ -164,7 +134,8 @@ barkodpos/
 │   ├── __init__.py         # Flask app factory
 │   ├── models.py           # SQLAlchemy modelleri
 │   ├── auth_helper.py      # Session tabanlı auth
-│   └── update_helper.py    # Güncelleme sistemi
+│   ├── update_helper.py    # Güncelleme sistemi
+│   └── printer_helper.py   # ESC/POS termal yazıcı
 ├── dist/BarkodPOS/         # Derlenmiş exe ve çalışma dosyaları
 ├── desktop_app.py          # PyQt5 masaüstü giriş noktası
 ├── build.bat               # PyInstaller derleme betiği

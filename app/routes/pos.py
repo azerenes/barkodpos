@@ -138,7 +138,7 @@ def complete_sale():
 
             if not items:
                 return jsonify({'error': 'Sepet boş'}), 400
-            if payment_method not in ['cash', 'credit_card', 'debt']:
+            if payment_method not in ['cash', 'credit_card']:
                 return jsonify({'error': 'Geçersiz ödeme yöntemi'}), 400
 
             receipt_no = f"BP{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}{get_user_id()}{random.randint(10,99)}"
@@ -208,10 +208,7 @@ def complete_sale():
                     quantity=qty, description=f'Satış #{receipt_no}'
                 ))
 
-            if customer_id:
-                customer = Customer.query.get(customer_id)
-                if customer and payment_method == 'debt':
-                    customer.balance = round(float(customer.balance) + grand_total, 2)
+
 
             db.session.commit()
             return jsonify({'success': True, 'receipt_no': receipt_no, 'grand_total': grand_total, 'sale_id': sale.id})
@@ -256,11 +253,6 @@ def return_sale():
                 ))
 
             sale.status = 'cancelled'
-
-            if sale.customer_id and sale.payment_method == 'debt':
-                customer = Customer.query.get(sale.customer_id)
-                if customer:
-                    customer.balance = round(float(customer.balance) - return_total, 2)
 
             db.session.commit()
             return jsonify({'success': True, 'receipt_no': receipt_no, 'refund': return_total})

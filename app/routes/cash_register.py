@@ -52,7 +52,6 @@ def close_register():
         ).all()
         cash_total = sum(float(s.grand_total) for s in sales if s.payment_method == 'cash')
         card_total = sum(float(s.grand_total) for s in sales if s.payment_method == 'credit_card')
-        debt_total = sum(float(s.grand_total) for s in sales if s.payment_method == 'debt')
 
         expenses = Expense.query.filter(
             Expense.branch_id == get_branch_id(),
@@ -68,7 +67,7 @@ def close_register():
         reg.difference = diff
         reg.status = 'closed'
         reg.closed_at = datetime.utcnow()
-        reg.notes = (reg.notes or '') + f' | Kasa: {cash_total:.2f} Kart: {card_total:.2f} Veresiye: {debt_total:.2f} Gider: {expense_total:.2f}'
+        reg.notes = (reg.notes or '') + f' | Nakit: {cash_total:.2f} Kart: {card_total:.2f} Gider: {expense_total:.2f}'
         db.session.commit()
 
         if diff != 0:

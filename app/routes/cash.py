@@ -15,20 +15,18 @@ def cash_register():
         Sale.status == 'completed'
     ).all()
 
-    cash_total = card_total = debt_total = 0
+    cash_total = card_total = 0
     for s in today_sales:
         total = float(s.grand_total)
         if s.payment_method == 'cash':
             cash_total += total
         elif s.payment_method == 'credit_card':
             card_total += total
-        elif s.payment_method == 'debt':
-            debt_total += total
 
-    grand_total = cash_total + card_total + debt_total
+    grand_total = cash_total + card_total
 
     return render_template('cash.html',
         cash_total=cash_total, card_total=card_total,
-        debt_total=debt_total, grand_total=grand_total,
+        grand_total=grand_total,
         sales_count=len(today_sales),
         today_sales=today_sales, today=today)

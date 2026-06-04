@@ -23,14 +23,6 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-warning">
-            <div class="card-body text-center">
-                <div class="h3 text-warning">{{ debt_total|round(2) }} ₺</div>
-                <small class="text-muted"><i class="bi bi-journal"></i> Veresiye</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
         <div class="card border-primary">
             <div class="card-body text-center">
                 <div class="h3 text-primary">{{ grand_total|round(2) }} ₺</div>
@@ -58,7 +50,7 @@
                     <td>
                         {% if s.payment_method == 'cash' %}<span class="badge bg-success">Nakit</span>
                         {% elif s.payment_method == 'credit_card' %}<span class="badge bg-info">Kart</span>
-                        {% else %}<span class="badge bg-warning">Veresiye</span>{% endif %}
+                        {% endif %}
                     </td>
                     <td><small>{{ s.created_at.strftime('%H:%M') }}</small></td>
                 </tr>

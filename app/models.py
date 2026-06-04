@@ -74,7 +74,7 @@ class Sale(db.Model):
     discount = db.Column(db.Numeric(10,2), default=0)
     tax_amount = db.Column(db.Numeric(10,2), default=0)
     grand_total = db.Column(db.Numeric(10,2), default=0)
-    payment_method = db.Column(db.Enum('cash', 'credit_card', 'debt'), default='cash')
+    payment_method = db.Column(db.String(20), default='cash')
     status = db.Column(db.Enum('completed', 'cancelled'), default='completed')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     items = db.relationship('SaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')

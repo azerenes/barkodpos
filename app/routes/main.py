@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
+@main_bp.route('/dashboard/')
 @login_required
 def dashboard():
     today = datetime.utcnow().date()

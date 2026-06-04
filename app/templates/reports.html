@@ -93,14 +93,6 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-warning h-100">
-            <div class="card-body text-center py-2">
-                <div class="h5 text-warning">{{ debt_total|round(2) }} ₺</div>
-                <small>Veresiye</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
         <div class="card border-secondary h-100">
             <div class="card-body text-center py-2">
                 <div class="h5">{{ total_expenses|round(2) }} ₺</div>
@@ -139,9 +131,9 @@
 <script>
 const paymentLabels = [];
 const paymentData = [];
-const paymentColors = {cash: '#198754', credit_card: '#0dcaf0', debt: '#ffc107'};
+const paymentColors = {cash: '#198754', credit_card: '#0dcaf0'};
 {% for ps in payment_stats %}
-paymentLabels.push('{{ "Nakit" if ps.payment_method == "cash" else "Kart" if ps.payment_method == "credit_card" else "Veresiye" }}');
+paymentLabels.push('{{ "Nakit" if ps.payment_method == "cash" else "Kart" }}');
 paymentData.push({{ ps.total|round(2) }});
 {% endfor %}
 

@@ -69,11 +69,6 @@ def reports():
             Sale.created_at >= start_date, Sale.created_at < end_date,
             Sale.status == 'completed', Sale.payment_method == 'credit_card'
         ).scalar() or 0
-        debt_total = db.session.query(db.func.sum(Sale.grand_total)).filter(
-            Sale.created_at >= start_date, Sale.created_at < end_date,
-            Sale.status == 'completed', Sale.payment_method == 'debt'
-        ).scalar() or 0
-
         cash_count = Sale.query.filter(
             Sale.created_at >= start_date, Sale.created_at < end_date,
             Sale.status == 'completed', Sale.payment_method == 'cash'
@@ -83,7 +78,7 @@ def reports():
         sales, product_stats, payment_stats = [], [], []
         total_sales = total_count = avg_sale = 0
         gross_profit = net_profit = total_expenses = 0
-        cash_total = card_total = debt_total = 0
+        cash_total = card_total = 0
         cash_count = 0
 
     return render_template('reports.html',
@@ -92,7 +87,7 @@ def reports():
         product_stats=product_stats, payment_stats=payment_stats,
         gross_profit=gross_profit, net_profit=net_profit,
         total_expenses=total_expenses,
-        cash_total=cash_total, card_total=card_total, debt_total=debt_total,
+        cash_total=cash_total, card_total=card_total,
         cash_count=cash_count)
 
 @report_bp.route('/weekly-data')
@@ -124,7 +119,4 @@ def payment_data():
     card = db.session.query(db.func.sum(Sale.grand_total)).filter(
         db.func.date(Sale.created_at) == today, Sale.payment_method == 'credit_card', Sale.status == 'completed'
     ).scalar() or 0
-    debt = db.session.query(db.func.sum(Sale.grand_total)).filter(
-        db.func.date(Sale.created_at) == today, Sale.payment_method == 'debt', Sale.status == 'completed'
-    ).scalar() or 0
-    return jsonify({'cash': float(cash), 'card': float(card), 'debt': float(debt)})
+    return jsonify({'cash': float(cash), 'card': float(card)})

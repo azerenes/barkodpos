@@ -152,10 +152,10 @@ fetch('/report/payment-data')
         new Chart(document.getElementById('paymentPieChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Nakit', 'Kart', 'Veresiye'],
+                labels: ['Nakit', 'Kart'],
                 datasets: [{
-                    data: [data.cash, data.card, data.debt],
-                    backgroundColor: ['#198754', '#0dcaf0', '#ffc107'],
+                    data: [data.cash, data.card],
+                    backgroundColor: ['#198754', '#0dcaf0'],
                     borderWidth: 0
                 }]
             },
