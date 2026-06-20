@@ -114,10 +114,10 @@ def update_product(id):
         if wholesale_price > 0:
             product.wholesale_price = wholesale_price
             product.wholesale_min_qty = wholesale_min
-        db.session.commit()
         from app.routes.purchase import log_price_history
         log_price_history(product.id, 'sale', old_sale, sale_price, 'Stok güncelleme')
         log_price_history(product.id, 'purchase', old_purchase, purchase_price, 'Stok güncelleme')
+        db.session.commit()
         flash('Ürün güncellendi', 'success')
     except Exception as e:
         db.session.rollback()

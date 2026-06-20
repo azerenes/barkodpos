@@ -14,13 +14,17 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtGui import QFont, QPainter, QColor
+from PyQt5.QtGui import QFont, QPainter, QColor, QIcon
 
 from app import create_app
 
 FLASK_HOST = '127.0.0.1'
 FLASK_PORT = 5000
 BASE_URL = f'http://{FLASK_HOST}:{FLASK_PORT}'
+
+def get_icon():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'static', 'barkodpos.ico')
+    return QIcon(p) if os.path.exists(p) else QIcon()
 
 flask_app = create_app()
 flask_thread = None
@@ -71,7 +75,8 @@ class MainWindow(QMainWindow):
 
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setToolTip('BarkodPOS')
-        self.tray_icon.setIcon(self.style().standardIcon(self.style().SP_ComputerIcon))
+        ico = get_icon()
+        self.tray_icon.setIcon(ico if not ico.isNull() else self.style().standardIcon(self.style().SP_ComputerIcon))
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.activated.connect(self.tray_clicked)
         self.tray_icon.show()
@@ -101,6 +106,9 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName('BarkodPOS')
     app.setOrganizationName('BarkodPOS')
+    app_icon = get_icon()
+    if not app_icon.isNull():
+        app.setWindowIcon(app_icon)
 
     splash = make_splash()
     splash.show()

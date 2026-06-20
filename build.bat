@@ -49,6 +49,8 @@ echo [2/4] Uygulama paketleniyor...
     --add-data "config.py;." ^
     --add-data ".env;." ^
     --add-data "updater.bat;." ^
+    --add-data "app/static/barkodpos.ico;app/static" ^
+    --icon "app/static/barkodpos.ico" ^
     %MSVC_DLLS% ^
     --hidden-import flask ^
     --hidden-import flask_sqlalchemy ^
