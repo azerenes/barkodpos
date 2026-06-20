@@ -63,78 +63,6 @@
                                 data-bs-target="#stockEntryModal{{ p.id }}"><i class="bi bi-plus-circle"></i></button>
                     </td>
                 </tr>
-
-                <div class="modal fade" id="editModal{{ p.id }}">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form method="POST" action="{{ url_for('stock.update_product', id=p.id) }}">
-                                <div class="modal-header"><h5>Ürün Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body">
-                                    <div class="mb-2"><label>Ürün Adı</label><input type="text" name="name" class="form-control" value="{{ p.name }}" required></div>
-                                    <div class="row">
-                                        <div class="col-6 mb-2"><label>Alış Fiyatı</label><input type="number" name="purchase_price" class="form-control" value="{{ p.purchase_price }}" step="0.01"></div>
-                                        <div class="col-6 mb-2"><label>Satış Fiyatı</label><input type="number" name="sale_price" class="form-control" value="{{ p.sale_price }}" step="0.01" required></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-4 mb-2"><label>Min Stok</label><input type="number" name="min_stock_qty" class="form-control" value="{{ p.min_stock_qty }}" step="0.01"></div>
-                                        <div class="col-4 mb-2"><label>KDV %</label><input type="number" name="tax_rate" class="form-control" value="{{ p.tax_rate }}" step="0.01"></div>
-                                        <div class="col-4 mb-2"><label>Birim</label>
-                                            <select name="unit" class="form-select">
-                                                <option value="Adet" {{ 'selected' if p.unit == 'Adet' }}>Adet</option>
-                                                <option value="Düzine" {{ 'selected' if p.unit == 'Düzine' }}>Düzine</option>
-                                                <option value="Kg" {{ 'selected' if p.unit == 'Kg' }}>Kg</option>
-                                                <option value="Lt" {{ 'selected' if p.unit == 'Lt' }}>Lt</option>
-                                                <option value="Paket" {{ 'selected' if p.unit == 'Paket' }}>Paket</option>
-                                                <option value="Koli" {{ 'selected' if p.unit == 'Koli' }}>Koli</option>
-                                                <option value="Set" {{ 'selected' if p.unit == 'Set' }}>Set</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label>Kategori</label>
-                                        <div class="input-group">
-                                            <select name="category_id" class="form-select">
-                                                <option value="">-</option>
-                                                {% for cat in categories %}
-                                                <option value="{{ cat.id }}" {{ 'selected' if p.category_id == cat.id }}>{{ cat.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <button class="btn btn-outline-primary" type="button" onclick="showEditCategory(this)" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
-                                        </div>
-                                    </div>
-                                    <div class="mb-2"><label>Tedarikçi</label>
-                                        <select name="supplier_id" class="form-select">
-                                            <option value="">-</option>
-                                            {% for s in suppliers %}
-                                            <option value="{{ s.id }}" {{ 'selected' if p.supplier_id == s.id }}>{{ s.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">Kaydet</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal fade" id="stockEntryModal{{ p.id }}">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form method="POST" action="{{ url_for('stock.stock_entry', id=p.id) }}">
-                                <div class="modal-header"><h5>Stok Girişi - {{ p.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body">
-                                    <div class="mb-2"><label>Miktar</label><input type="number" name="quantity" class="form-control" step="0.01" required></div>
-                                    <div class="mb-2"><label>Açıklama</label><input type="text" name="description" class="form-control" placeholder="Stok giriş sebebi"></div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-success">Stok Girişi Yap</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
                 {% else %}
                 <tr><td colspan="9" class="text-center text-muted">Henüz ürün yok</td></tr>
                 {% endfor %}
@@ -243,6 +171,80 @@
         </div>
     </div>
 </div>
+
+{% for p in products %}
+<div class="modal fade" id="editModal{{ p.id }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('stock.update_product', id=p.id) }}">
+                <div class="modal-header"><h5>Ürün Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Ürün Adı</label><input type="text" name="name" class="form-control" value="{{ p.name }}" required></div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label>Alış Fiyatı</label><input type="number" name="purchase_price" class="form-control" value="{{ p.purchase_price }}" step="0.01"></div>
+                        <div class="col-6 mb-2"><label>Satış Fiyatı</label><input type="number" name="sale_price" class="form-control" value="{{ p.sale_price }}" step="0.01" required></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label>Min Stok</label><input type="number" name="min_stock_qty" class="form-control" value="{{ p.min_stock_qty }}" step="0.01"></div>
+                        <div class="col-4 mb-2"><label>KDV %</label><input type="number" name="tax_rate" class="form-control" value="{{ p.tax_rate }}" step="0.01"></div>
+                        <div class="col-4 mb-2"><label>Birim</label>
+                            <select name="unit" class="form-select">
+                                <option value="Adet" {{ 'selected' if p.unit == 'Adet' }}>Adet</option>
+                                <option value="Düzine" {{ 'selected' if p.unit == 'Düzine' }}>Düzine</option>
+                                <option value="Kg" {{ 'selected' if p.unit == 'Kg' }}>Kg</option>
+                                <option value="Lt" {{ 'selected' if p.unit == 'Lt' }}>Lt</option>
+                                <option value="Paket" {{ 'selected' if p.unit == 'Paket' }}>Paket</option>
+                                <option value="Koli" {{ 'selected' if p.unit == 'Koli' }}>Koli</option>
+                                <option value="Set" {{ 'selected' if p.unit == 'Set' }}>Set</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>Kategori</label>
+                        <div class="input-group">
+                            <select name="category_id" class="form-select">
+                                <option value="">-</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {{ 'selected' if p.category_id == cat.id }}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-primary" type="button" onclick="showEditCategory(this)" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-2"><label>Tedarikçi</label>
+                        <select name="supplier_id" class="form-select">
+                            <option value="">-</option>
+                            {% for s in suppliers %}
+                            <option value="{{ s.id }}" {{ 'selected' if p.supplier_id == s.id }}>{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stockEntryModal{{ p.id }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('stock.stock_entry', id=p.id) }}">
+                <div class="modal-header"><h5>Stok Girişi - {{ p.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Miktar</label><input type="number" name="quantity" class="form-control" step="0.01" required></div>
+                    <div class="mb-2"><label>Açıklama</label><input type="text" name="description" class="form-control" placeholder="Stok giriş sebebi"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Stok Girişi Yap</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <script>
 function filterStock() {
