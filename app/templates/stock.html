@@ -285,7 +285,11 @@ function toggleQuick(id) {
 
 function exportStockExcel() {
     const q = document.querySelector('input[name="q"]')?.value || '';
-    window.location.href = '/stock/export-csv?q=' + encodeURIComponent(q);
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = '/stock/export-csv?q=' + encodeURIComponent(q);
+    document.body.appendChild(iframe);
+    setTimeout(() => iframe.remove(), 10000);
 }
 
 function showAddCategory() {

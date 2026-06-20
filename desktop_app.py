@@ -10,9 +10,9 @@ os.environ['QSG_RENDERER_LOOP'] = 'basic'
 os.environ['QT_QUICK_BACKEND'] = 'software'
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QSplashScreen, QSystemTrayIcon, QMenu
+    QApplication, QMainWindow, QSplashScreen, QSystemTrayIcon, QMenu, QFileDialog
 )
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineDownloadItem
 from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QFont, QPainter, QColor, QIcon
 
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
 
         self.browser = QWebEngineView()
+        self.browser.page().profile().downloadRequested.connect(self.handle_download)
         self.browser.setUrl(QUrl(BASE_URL))
         self.setCentralWidget(self.browser)
 
@@ -80,6 +81,13 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.activated.connect(self.tray_clicked)
         self.tray_icon.show()
+
+    def handle_download(self, download: QWebEngineDownloadItem):
+        suggested = download.suggestedFileName() or 'export.csv'
+        file_path, _ = QFileDialog.getSaveFileName(self, 'Dosyayı Kaydet', suggested)
+        if file_path:
+            download.setPath(file_path)
+            download.accept()
 
     def show_and_raise(self):
         self.showNormal()

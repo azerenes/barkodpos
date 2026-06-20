@@ -209,7 +209,11 @@ new Chart(document.getElementById('productChart'), {
 });
 
 function exportExcel() {
-    window.location.href = '/report/export-csv?period={{ period }}';
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = '/report/export-csv?period={{ period }}';
+    document.body.appendChild(iframe);
+    setTimeout(() => iframe.remove(), 10000);
 }
 </script>
 {% endblock %}
