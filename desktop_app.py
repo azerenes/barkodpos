@@ -31,8 +31,8 @@ flask_thread = None
 
 def flask_ready():
     try:
-        urllib.request.urlopen(f'{BASE_URL}/auth/login', timeout=2)
-        return True
+        r = urllib.request.urlopen(f'{BASE_URL}/auth/personel', timeout=2)
+        return r.status == 200
     except Exception:
         return False
 
