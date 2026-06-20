@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Category, StockMovement
 from app import db
+from datetime import datetime
 
 purchase_bp = Blueprint('purchase', __name__, url_prefix='/purchase')
 
@@ -140,8 +141,7 @@ def invoice_new():
             quantities = request.form.getlist('qty[]')
             prices = request.form.getlist('price[]')
 
-            from datetime import datetime as dt
-            inv_date = dt.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.utcnow()
+            inv_date = datetime.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.utcnow()
 
             total = 0
             invoice = PurchaseInvoice(

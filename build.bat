@@ -17,23 +17,25 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [1/3] Uygulama paketleniyor...
+echo [1/4] MSVC runtime DLL'leri bulunuyor...
 
-if exist "C:\upx\upx.exe" (
-    set UPX_DIR=C:\upx
-) else if exist "%USERPROFILE%\Downloads\upx-4.2.4-win64\upx.exe" (
-    set UPX_DIR=%USERPROFILE%\Downloads\upx-4.2.4-win64
-) else (
-    set UPX_DIR=
-)
+:: Visual C++ runtime DLL'lerini pakete ekle (hicbir ek kurulum gerektirmesin)
+set MSVC_DLLS=
+set MSVC_SRC=%SystemRoot%\System32
 
-if not "%UPX_DIR%"=="" (
-    set UPX_ARG=--upx-dir "%UPX_DIR%"
-) else (
-    set UPX_ARG=
-)
+if exist "%MSVC_SRC%\msvcp140.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\msvcp140.dll;."
+if exist "%MSVC_SRC%\msvcp140_1.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\msvcp140_1.dll;."
+if exist "%MSVC_SRC%\msvcp140_2.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\msvcp140_2.dll;."
+if exist "%MSVC_SRC%\vcruntime140.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\vcruntime140.dll;."
+if exist "%MSVC_SRC%\vcruntime140_1.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\vcruntime140_1.dll;."
+if exist "%MSVC_SRC%\concrt140.dll" set MSVC_DLLS=%MSVC_DLLS% --add-data "%MSVC_SRC%\concrt140.dll;."
 
-.venv\Scripts\pyinstaller --noconfirm --clean %UPX_ARG% ^
+echo MSVC DLL eklenecek: %MSVC_DLLS%
+
+echo [2/4] Uygulama paketleniyor...
+
+:: NOT: UPX devre disi (SmartScreen + antivirus yanlis alarm)
+.venv\Scripts\pyinstaller --noconfirm --clean --noupx ^
     --name "BarkodPOS" ^
     --windowed ^
     --add-data "app/templates;app/templates" ^
@@ -47,6 +49,7 @@ if not "%UPX_DIR%"=="" (
     --add-data "config.py;." ^
     --add-data ".env;." ^
     --add-data "updater.bat;." ^
+    %MSVC_DLLS% ^
     --hidden-import flask ^
     --hidden-import flask_sqlalchemy ^
     --hidden-import sqlalchemy ^
@@ -64,13 +67,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [2/3] Veritabani kopyalaniyor...
+echo [3/4] Veritabani kopyalaniyor...
 if exist instance (
     xcopy /E /I /Y instance "dist\BarkodPOS\instance" >nul
 )
-
-echo [3/3] README ve sikca sorulan sorular kopyalaniyor...
-if exist README.md copy /Y README.md "dist\BarkodPOS\README.md" >nul
 
 echo [4/4] Gecici dosyalar temizleniyor...
 if exist build rmdir /S /Q build >nul
@@ -84,5 +84,8 @@ echo ===================================
 echo.
 echo NOT: Uygulama ilk acilista admin kullanicisini
 echo otomatik olusturur.
+echo NOT2: UPX kapali (antivirus uyari vermesin diye)
+echo       MSVC runtime DLL'leri paketin icine eklendi
+echo       (kullanici ek kurulum yapmak zorunda degil)
 echo.
 pause
