@@ -2,10 +2,12 @@ import sys, os, threading, time, urllib.request, atexit, signal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# QtWebEngine crash fix: sandbox + GPU sorunlarını önle
+# QtWebEngine crash fix: sandbox + GPU + OpenGL sorunlarını önle
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = '1'
-os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--no-sandbox --disable-gpu'
-os.environ['QT_OPENGL'] = 'software'
+os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--no-sandbox --disable-gpu --disable-software-rasterizer --use-gl=swiftshader --disable-accelerated-2d-canvas --disable-accelerated-video-decode --ignore-gpu-blocklist'
+os.environ['QT_OPENGL'] = 'angle'
+os.environ['QSG_RENDERER_LOOP'] = 'basic'
+os.environ['QT_QUICK_BACKEND'] = 'software'
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QSplashScreen, QSystemTrayIcon, QMenu

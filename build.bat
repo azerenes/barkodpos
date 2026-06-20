@@ -72,6 +72,15 @@ if exist instance (
     xcopy /E /I /Y instance "dist\BarkodPOS\instance" >nul
 )
 
+:: ANGLE (OpenGL ES -> DirectX) DLL'lerini _internal kokune kopyala
+:: Boylece QtWebEngineProcess.exe onlari kolayca bulur
+if exist "dist\BarkodPOS\_internal\PyQt5\Qt5\bin\libEGL.dll" (
+    copy /Y "dist\BarkodPOS\_internal\PyQt5\Qt5\bin\libEGL.dll" "dist\BarkodPOS\_internal\" >nul
+    copy /Y "dist\BarkodPOS\_internal\PyQt5\Qt5\bin\libGLESv2.dll" "dist\BarkodPOS\_internal\" >nul
+    copy /Y "dist\BarkodPOS\_internal\PyQt5\Qt5\bin\d3dcompiler_47.dll" "dist\BarkodPOS\_internal\" >nul
+    echo ANGLE DLL'leri _internal kokune kopyalandi
+)
+
 echo [4/4] Gecici dosyalar temizleniyor...
 if exist build rmdir /S /Q build >nul
 if exist BarkodPOS.spec del /F /Q BarkodPOS.spec >nul
