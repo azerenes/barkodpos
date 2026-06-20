@@ -320,17 +320,10 @@ document.getElementById('discountInput').addEventListener('input', () => {
     updateTotals(subtotal);
 });
 
-function completeSale() {
-    if (cart.length === 0) { alert('Sepet boş'); return; }
-
-    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-
-    const data = {
-        items: cart,
-        customer_id: document.getElementById('customerSelect').value || null,
-        payment_method: paymentMethod,
-        discount: parseFloat(document.getElementById('discountInput').value) || 0
-    };
+function doCompleteSale(data) {
+    var btn = document.querySelector('button.btn-success');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kaydediliyor...';
 
     fetch('/pos/complete-sale', {
         method: 'POST',
@@ -339,18 +332,79 @@ function completeSale() {
     })
     .then(r => r.json())
     .then(result => {
-                        if (result.success) {
-                            var choice = confirm(`Satış tamamlandı!\nFiş: ${result.receipt_no}\nTutar: ${result.grand_total.toFixed(2)} ₺\n\nFiş sayfasını açmak için Tamam,\nTermal yazıcıya yazdırmak için İptal'e tıklayın.`);
-                            if (choice) {
-                                window.open(`/receipt/${result.sale_id}`, '_blank');
-                            } else {
-                                fetch('/receipt/print/' + result.sale_id, { method: 'POST' });
-                            }
-                            clearCart();
-                        } else {
-                            alert('Hata: ' + result.error);
-                        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Satışı Tamamla';
+        if (result.success) {
+            var posMsg = '';
+            if (result.pos) {
+                if (result.pos.success) {
+                    posMsg = '\nPOS Onay: ' + (result.pos.approval_code || '');
+                } else if (!result.pos.pos_unavailable) {
+                    posMsg = '\nPOS Hata: ' + (result.pos.error || '');
+                }
+            }
+            var choice = confirm(`Satış tamamlandı!${posMsg}\nFiş: ${result.receipt_no}\nTutar: ${result.grand_total.toFixed(2)} ₺\n\nFiş sayfasını açmak için Tamam,\nTermal yazıcıya yazdırmak için İptal'e tıklayın.`);
+            if (choice) {
+                window.open(`/receipt/${result.sale_id}`, '_blank');
+            } else {
+                fetch('/receipt/print/' + result.sale_id, { method: 'POST' });
+            }
+            clearCart();
+        } else {
+            alert('Hata: ' + result.error);
+        }
     });
+}
+
+function completeSale() {
+    if (cart.length === 0) { alert('Sepet boş'); return; }
+
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+    const subtotal = cart.reduce((s, i) => s + i.total, 0);
+    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+    const grandTotal = Math.max(0, subtotal - discount);
+
+    const data = {
+        items: cart,
+        customer_id: document.getElementById('customerSelect').value || null,
+        payment_method: paymentMethod,
+        discount: discount
+    };
+
+    if (paymentMethod === 'credit_card') {
+        var btn = document.querySelector('button.btn-success');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> POS\'a gönderiliyor...';
+
+        fetch('/pos/send-pos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({amount: grandTotal})
+        })
+        .then(r => r.json())
+        .then(posResult => {
+            btn.disabled = false;
+            if (posResult.pos_unavailable) {
+                doCompleteSale(data);
+            } else if (posResult.success) {
+                doCompleteSale(data);
+            } else {
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Satışı Tamamla';
+                if (confirm(`POS hatası: ${posResult.error}\n\nYine de satışı tamamlamak ister misiniz?`)) {
+                    doCompleteSale(data);
+                }
+            }
+        })
+        .catch(e => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Satışı Tamamla';
+            if (confirm('POS iletişim hatası. Yine de satışı tamamlamak ister misiniz?')) {
+                doCompleteSale(data);
+            }
+        });
+    } else {
+        doCompleteSale(data);
+    }
 }
 
 function clearCart() {

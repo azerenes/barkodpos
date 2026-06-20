@@ -165,6 +165,40 @@
         </div>
 
         <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-credit-card"></i> POS Terminali (Nesine)</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings.save') }}">
+                    <div class="mb-2">
+                        <label>POS Türü</label>
+                        <select name="pos_type" class="form-select">
+                            <option value="none" {{ 'selected' if pos_type == 'none' }}>Kullanılmıyor</option>
+                            <option value="serial" {{ 'selected' if pos_type == 'serial' }}>Seri Port (COM)</option>
+                            <option value="tcp" {{ 'selected' if pos_type == 'tcp' }}>Ağ Bağlantısı (TCP/IP)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Adres</label>
+                        <input type="text" name="pos_address" class="form-control" value="{{ pos_address }}"
+                               placeholder="COM1 veya 192.168.1.100:9100">
+                        <div class="form-text small text-muted">
+                            Seri port için: <code>COM1</code>, <code>COM2</code> ...<br>
+                            TCP/IP için: <code>IP:PORT</code> (örn: <code>192.168.1.100:9100</code>)
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>Zaman Aşımı (saniye)</label>
+                        <input type="number" name="pos_timeout" class="form-control" value="{{ pos_timeout }}" min="10" max="120">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary w-100 mb-2"><i class="bi bi-save"></i> Kaydet</button>
+                </form>
+                <button class="btn btn-outline-info w-100" onclick="testPOS()">
+                    <i class="bi bi-plug"></i> Bağlantıyı Test Et
+                </button>
+                <div id="posTestResult" class="mt-2 small"></div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
             <div class="card-header"><i class="bi bi-arrow-repeat"></i> Güncelleme</div>
             <div class="card-body">
                 <p class="text-muted" id="updateStatus">Sürüm kontrolü yapılıyor...</p>
@@ -248,6 +282,40 @@ function doUpdate() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-download"></i> Tekrar Dene';
         });
+}
+function testPOS() {
+    var btn = document.querySelector('button[onclick="testPOS()"]');
+    var res = document.getElementById('posTestResult');
+    var ptype = document.querySelector('select[name="pos_type"]').value;
+    var paddr = document.querySelector('input[name="pos_address"]').value;
+    if (ptype === 'none') { res.innerHTML = '<span class="text-warning">POS kullanılmıyor</span>'; return; }
+    if (!paddr) { res.innerHTML = '<span class="text-danger">Adres girin</span>'; return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Test ediliyor...';
+    res.innerHTML = '';
+    fetch('{{ url_for("settings.test_pos") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({pos_type: ptype, pos_address: paddr})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.available_ports && d.available_ports.length > 0) {
+            res.innerHTML += '<div class="text-info">Kullanılabilir portlar: ' + d.available_ports.join(', ') + '</div>';
+        }
+        if (d.success) {
+            res.innerHTML += '<div class="text-success"><i class="bi bi-check-circle"></i> ' + d.message + '</div>';
+        } else {
+            res.innerHTML += '<div class="text-danger"><i class="bi bi-exclamation-triangle"></i> ' + d.error + '</div>';
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plug"></i> Bağlantıyı Test Et';
+    })
+    .catch(e => {
+        res.innerHTML = '<span class="text-danger">Test hatası</span>';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plug"></i> Bağlantıyı Test Et';
+    });
 }
 checkUpdate();
 </script>

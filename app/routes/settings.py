@@ -45,6 +45,9 @@ def index():
         from_email=get_setting('from_email', ''),
         printer_type=get_setting('printer_type', 'none'),
         printer_address=get_setting('printer_address', ''),
+        pos_type=get_setting('pos_type', 'none'),
+        pos_address=get_setting('pos_address', ''),
+        pos_timeout=get_setting('pos_timeout', '30'),
         currency_usd=get_setting('currency_usd', '0'),
         currency_eur=get_setting('currency_eur', '0'),
         github_repo=f'{GITHUB_OWNER}/{GITHUB_REPO}',
@@ -74,6 +77,9 @@ def save():
         set_setting('from_email', request.form.get('from_email', ''))
         set_setting('printer_type', request.form.get('printer_type', 'none'))
         set_setting('printer_address', request.form.get('printer_address', ''))
+        set_setting('pos_type', request.form.get('pos_type', 'none'))
+        set_setting('pos_address', request.form.get('pos_address', ''))
+        set_setting('pos_timeout', request.form.get('pos_timeout', '30'))
         set_setting('currency_usd', request.form.get('currency_usd', '0'))
         set_setting('currency_eur', request.form.get('currency_eur', '0'))
         db.session.commit()
@@ -163,3 +169,20 @@ def do_update():
         'success': True,
         'message': 'Güncelleme indirildi. Uygulama yeniden başlayacak.'
     })
+
+@settings_bp.route('/test-pos', methods=['POST'])
+@login_required
+def test_pos():
+    if not is_admin():
+        return jsonify({'error': 'Yetkiniz yok'}), 403
+    from app.pos_helper import test_connection, list_ports
+    ptype = request.form.get('pos_type') or request.json.get('pos_type') if request.is_json else None
+    paddr = request.form.get('pos_address') or request.json.get('pos_address') if request.is_json else None
+    if not ptype:
+        ptype = get_setting('pos_type', 'none')
+    if not paddr:
+        paddr = get_setting('pos_address', '')
+    result = test_connection(ptype, paddr)
+    ports = list_ports() if ptype == 'serial' else []
+    result['available_ports'] = ports
+    return jsonify(result)

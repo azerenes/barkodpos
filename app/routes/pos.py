@@ -211,11 +211,45 @@ def complete_sale():
 
 
             db.session.commit()
-            return jsonify({'success': True, 'receipt_no': receipt_no, 'grand_total': grand_total, 'sale_id': sale.id})
+
+            pos_result = None
+            if payment_method == 'credit_card':
+                try:
+                    from app.routes.settings import get_setting
+                    ptype = get_setting('pos_type', 'none')
+                    paddr = get_setting('pos_address', '')
+                    ptimeout = int(float(get_setting('pos_timeout', '30')))
+                    if ptype != 'none' and paddr:
+                        from app.pos_helper import send_sale
+                        pos_result = send_sale(grand_total, ptype, paddr, ptimeout)
+                except Exception:
+                    pos_result = {'success': False, 'error': 'POS iletişim hatası'}
+
+            resp = {'success': True, 'receipt_no': receipt_no, 'grand_total': grand_total, 'sale_id': sale.id}
+            if pos_result:
+                resp['pos'] = pos_result
+            return jsonify(resp)
 
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': f'Sistem hatası: {str(e)}'}), 500
+
+@pos_bp.route('/send-pos', methods=['POST'])
+@login_required
+def send_pos():
+    data = request.get_json() or {}
+    amount = round(float(data.get('amount', 0)), 2)
+    if amount <= 0:
+        return jsonify({'error': 'Geçersiz tutar'}), 400
+    from app.routes.settings import get_setting
+    from app.pos_helper import send_sale
+    ptype = get_setting('pos_type', 'none')
+    paddr = get_setting('pos_address', '')
+    ptimeout = int(float(get_setting('pos_timeout', '30')))
+    if ptype == 'none' or not paddr:
+        return jsonify({'success': False, 'error': 'POS yapılandırılmamış', 'pos_unavailable': True})
+    result = send_sale(amount, ptype, paddr, ptimeout)
+    return jsonify(result)
 
 @pos_bp.route('/return', methods=['POST'])
 @login_required
