@@ -1,6 +1,6 @@
 import os, sys, json, urllib.request, urllib.error, zipfile, tempfile, shutil, subprocess, ssl
 
-CURRENT_VERSION = '1.2.1'
+CURRENT_VERSION = '1.2.2'
 GITHUB_OWNER = 'azerenes'
 GITHUB_REPO = 'BarkodPOS'
 
@@ -95,16 +95,34 @@ def download_and_apply(info):
 chcp 65001 >nul
 title BarkodPOS Güncelleme
 echo BarkodPOS güncelleniyor...
+
+:: Flask sunucusunun kapanmasi icin bekle
+timeout /t 2 /nobreak >nul
+
+:: Eski sureci zorla kapat
+taskkill /f /im BarkodPOS.exe >nul 2>&1
 timeout /t 3 /nobreak >nul
 
-:: Eski dosyaları temizle
+:: Eski dosyalari temizle (birden fazla deneme)
+set RETRY=0
+:RETRY_INTERNAL
 if exist "%~dp0_internal" (
     rmdir /s /q "%~dp0_internal" >nul 2>&1
+    if exist "%~dp0_internal" (
+        set /a RETRY+=1
+        if !RETRY! lss 5 (
+            timeout /t 2 /nobreak >nul
+            goto RETRY_INTERNAL
+        )
+    )
 )
 
-:: Yeni dosyaları kopyala
+:: Yeni dosyalari kopyala
 xcopy /E /I /Y "{update_root}\\_internal" "%~dp0_internal" >nul 2>&1
 copy /Y "{update_root}\\BarkodPOS.exe" "%~dp0\\BarkodPOS.exe" >nul 2>&1
+
+:: Gecici dosyalari temizle
+rmdir /s /q "{tmp}" >nul 2>&1
 
 echo Güncelleme tamam!
 start "" "%~dp0BarkodPOS.exe"

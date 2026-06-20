@@ -127,7 +127,26 @@ def main():
 
     splash.close()
 
-    window = MainWindow()
+    if not flask_ready():
+        error_html = '''
+        <html><body style="background:#1a1a2e;color:white;font-family:sans-serif;
+        display:flex;align-items:center;justify-content:center;height:100vh;margin:0;
+        flex-direction:column;text-align:center">
+        <h1>Sunucu Başlatılamadı</h1>
+        <p>Flask sunucusu 30 saniye içinde başlamadı.</p>
+        <p style="color:#888">Güncelleme sırasında dosyalar bozulmuş olabilir.<br>
+        Lütfen <a href="https://github.com/azerenes/barkodpos/releases" style="color:#4da6ff">
+        en son sürümü</a> indirip tekrar kurun.</p>
+        </body></html>
+        '''
+        import tempfile
+        err_path = os.path.join(tempfile.gettempdir(), 'barkodpos_error.html')
+        with open(err_path, 'w', encoding='utf-8') as f:
+            f.write(error_html)
+        window = MainWindow()
+        window.browser.setUrl(QUrl.fromLocalFile(err_path))
+    else:
+        window = MainWindow()
     window.show()
 
     def cleanup():
