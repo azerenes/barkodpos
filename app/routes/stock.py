@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Category, StockMovement, Supplier, PriceHistory, ProductPrice, RecipeItem
 from app import db
@@ -381,6 +381,36 @@ def set_product_unpack(id):
     db.session.commit()
     flash(f'{qty} adet set ürün açıldı, bileşenler stoğa eklendi', 'success')
     return redirect(url_for('stock.set_product_detail', id=id))
+
+@stock_bp.route('/export-csv')
+@login_required
+def export_stock_csv():
+    query = Product.query.filter_by(is_active=True).order_by(Product.name)
+    search = request.args.get('q', '').strip()
+    if search:
+        like = f'%{search}%'
+        query = query.filter(or_(
+            Product.barcode.ilike(like),
+            Product.name.ilike(like)
+        ))
+    products = query.all()
+    import io, csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Barkod', 'Urun Adi', 'Kategori', 'Alis Fiyati', 'Satis Fiyati', 'Stok', 'Min Stok', 'Birim'])
+    for p in products:
+        writer.writerow([
+            p.barcode, p.name,
+            p.category.name if p.category else '',
+            str(p.purchase_price or 0), str(p.sale_price or 0),
+            str(p.stock_qty or 0), str(p.min_stock_qty or 0), p.unit or ''
+        ])
+    csv_output = output.getvalue()
+    return Response(
+        '\ufeff' + csv_output,
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename=stok_listesi.csv'}
+    )
 
 @stock_bp.route('/toggle-quick/<int:id>', methods=['POST'])
 @login_required

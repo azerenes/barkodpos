@@ -77,7 +77,7 @@ with app.test_client() as c:
     diag = c.get('/diagnostic/info').get_json()
     for field in ['version', 'github_owner', 'github_repo', 'os', 'user_id', 'user_name', 'is_admin', 'time']:
         test(f'diagnostic.{field}', field in diag)
-    test('diagnostic.version 1.2.0', diag.get('version') == '1.2.0')
+    test('diagnostic.version 1.2.1', diag.get('version') == '1.2.1')
     test('diagnostic.github_owner azerenes', diag.get('github_owner') == 'azerenes')
 
     section('3. Kategori ve Urun Olusturma')

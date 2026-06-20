@@ -284,26 +284,8 @@ function toggleQuick(id) {
 }
 
 function exportStockExcel() {
-    const table = document.getElementById('stockTable');
-    let csv = 'Barkod,Ürün Adı,Kategori,Alış Fiyatı,Satış Fiyatı,Stok,Min Stok,Birim\n';
-    table.querySelectorAll('tbody tr').forEach(row => {
-        const cols = row.querySelectorAll('td');
-        if (cols.length >= 8) {
-            csv += cols[0].textContent.trim() + ',' +
-                   cols[1].textContent.trim() + ',' +
-                   cols[2].textContent.trim() + ',' +
-                   cols[3].textContent.trim().replace(' ₺','') + ',' +
-                   cols[4].textContent.trim().replace(' ₺','') + ',' +
-                   cols[5].textContent.trim() + ',' +
-                   cols[6].textContent.trim() + ',' +
-                   cols[7].textContent.trim() + '\n';
-        }
-    });
-    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'stok_listesi.csv';
-    link.click();
+    const q = document.querySelector('input[name="q"]')?.value || '';
+    window.location.href = '/stock/export-csv?q=' + encodeURIComponent(q);
 }
 
 function showAddCategory() {

@@ -209,38 +209,7 @@ new Chart(document.getElementById('productChart'), {
 });
 
 function exportExcel() {
-    const table = document.getElementById('salesTable');
-    const returnTable = document.getElementById('returnTable');
-    let csv = 'Fiş No,Müşteri,Tutar,İndirim,Ödeme,Tarih,Tür\n';
-    table.querySelectorAll('tbody tr').forEach(row => {
-        const cols = row.querySelectorAll('td');
-        if (cols.length >= 6) {
-            csv += cols[0].textContent.trim() + ',' +
-                   cols[1].textContent.trim() + ',' +
-                   cols[2].textContent.trim().replace(' ₺','') + ',' +
-                   cols[3].textContent.trim() + ',' +
-                   cols[4].textContent.trim() + ',' +
-                   cols[5].textContent.trim() + ',Satış\n';
-        }
-    });
-    if (returnTable) {
-        returnTable.querySelectorAll('tbody tr').forEach(row => {
-            const cols = row.querySelectorAll('td');
-            if (cols.length >= 6) {
-                csv += cols[0].textContent.trim() + ',' +
-                       cols[1].textContent.trim() + ',' +
-                       cols[2].textContent.trim().replace(' ₺','') + ',' +
-                       cols[3].textContent.trim() + ',' +
-                       cols[4].textContent.trim() + ',' +
-                       cols[5].textContent.trim() + ',İade\n';
-            }
-        });
-    }
-    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'satis_raporu_{{ period }}.csv';
-    link.click();
+    window.location.href = '/report/export-csv?period={{ period }}';
 }
 </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, Response
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Sale, SaleItem, Product, Expense
 from app import db
@@ -126,3 +126,39 @@ def payment_data():
         db.func.date(Sale.created_at) == today, Sale.payment_method == 'credit_card', Sale.status == 'completed'
     ).scalar() or 0
     return jsonify({'cash': float(cash), 'card': float(card)})
+
+@report_bp.route('/export-csv')
+@login_required
+def export_report_csv():
+    period = request.args.get('period', 'today')
+    today = datetime.utcnow().date()
+    period_map = {
+        'today': (today, today + timedelta(days=1)),
+        'week': (today - timedelta(days=today.weekday()), today + timedelta(days=1)),
+        'month': (today.replace(day=1), today + timedelta(days=1)),
+        'year': (today.replace(month=1, day=1), today + timedelta(days=1)),
+    }
+    start_date, end_date = period_map.get(period, (today, today + timedelta(days=1)))
+    all_sales = Sale.query.filter(
+        Sale.created_at >= start_date, Sale.created_at < end_date
+    ).order_by(Sale.created_at.desc()).all()
+
+    import io, csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Fis No', 'Musteri', 'Tutar', 'Indirim', 'Odeme', 'Tarih', 'Tur'])
+    for s in all_sales:
+        writer.writerow([
+            s.receipt_no or '',
+            s.customer.name if s.customer else '',
+            str(s.grand_total or 0), str(s.discount or 0),
+            s.payment_method or '',
+            s.created_at.strftime('%d.%m.%Y %H:%M') if s.created_at else '',
+            'Iade' if s.status == 'cancelled' else 'Satis'
+        ])
+    csv_output = output.getvalue()
+    return Response(
+        '\ufeff' + csv_output,
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename=satis_raporu_{period}.csv'}
+    )
