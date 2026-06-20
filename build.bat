@@ -38,6 +38,7 @@ echo [2/4] Uygulama paketleniyor...
 .venv\Scripts\pyinstaller --noconfirm --clean --noupx ^
     --name "BarkodPOS" ^
     --windowed ^
+    --version-file "version_info.txt" ^
     --add-data "app/templates;app/templates" ^
     --add-data "app/static;app/static" ^
     --add-data "app/__init__.py;app" ^
@@ -45,6 +46,7 @@ echo [2/4] Uygulama paketleniyor...
     --add-data "app/auth_helper.py;app" ^
     --add-data "app/update_helper.py;app" ^
     --add-data "app/printer_helper.py;app" ^
+    --add-data "app/pos_helper.py;app" ^
     --add-data "app/routes;app/routes" ^
     --add-data "config.py;." ^
     --add-data ".env;." ^
@@ -61,6 +63,29 @@ echo [2/4] Uygulama paketleniyor...
     --hidden-import serial.tools.list_ports ^
     --collect-all PyQt5 ^
     --collect-all PyQtWebEngine ^
+    --exclude-module PyQt5.QtBluetooth ^
+    --exclude-module PyQt5.Qt3DCore ^
+    --exclude-module PyQt5.Qt3DInput ^
+    --exclude-module PyQt5.Qt3DLogic ^
+    --exclude-module PyQt5.Qt3DRender ^
+    --exclude-module PyQt5.Qt3DAnimation ^
+    --exclude-module PyQt5.Qt3DExtras ^
+    --exclude-module PyQt5.QtLocation ^
+    --exclude-module PyQt5.QtMultimedia ^
+    --exclude-module PyQt5.QtMultimediaWidgets ^
+    --exclude-module PyQt5.QtNfc ^
+    --exclude-module PyQt5.QtQuick ^
+    --exclude-module PyQt5.QtQuick3D ^
+    --exclude-module PyQt5.QtQuickWidgets ^
+    --exclude-module PyQt5.QtSensors ^
+    --exclude-module PyQt5.QtSerialPort ^
+    --exclude-module PyQt5.QtSql ^
+    --exclude-module PyQt5.QtTest ^
+    --exclude-module PyQt5.QtTextToSpeech ^
+    --exclude-module PyQt5.QtWebSockets ^
+    --exclude-module PyQt5.QtXmlPatterns ^
+    --exclude-module PyQt5.QtDesigner ^
+    --exclude-module PyQt5.QtHelp ^
     desktop_app.py
 
 if %errorlevel% neq 0 (
