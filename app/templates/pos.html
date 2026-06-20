@@ -180,8 +180,30 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button class="btn btn-warning" onclick="doQuickSale()">
+                <button class="btn btn-warning" id="doQuickSale" onclick="doQuickSale()">
                     <i class="bi bi-cart-plus"></i> Sepete Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="unknownBarcodeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="bi bi-question-circle text-warning"></i> Barkod Tanınamadı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" id="unknownBarcodeBody">
+                <p class="mb-1">Bu barkod sistemde kayıtlı değil.</p>
+                <p class="fw-bold mb-2" id="unknownBarcodeDisplay"></p>
+                <p class="text-muted small">Yeni ürün eklemek ister misiniz?</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button class="btn btn-primary" id="unknownBarcodeAddBtn" onclick="addUnknownProduct()">
+                    <i class="bi bi-plus-circle"></i> Ürün Ekle
                 </button>
             </div>
         </div>
@@ -208,7 +230,13 @@ function searchProduct() {
             const container = document.getElementById('searchResults');
             if (products.length === 0) {
                 container.style.display = 'none';
-                showError('Ürün bulunamadı');
+                const barcode = document.getElementById('barcodeInput').value.trim();
+                if (barcode.length > 0) {
+                    document.getElementById('unknownBarcodeDisplay').textContent = 'Barkod: ' + barcode;
+                    document.getElementById('unknownBarcodeAddBtn').dataset.barcode = barcode;
+                    const modal = new bootstrap.Modal(document.getElementById('unknownBarcodeModal'));
+                    modal.show();
+                }
                 return;
             }
             if (products.length === 1) {
@@ -238,6 +266,13 @@ function selectProduct(idx) {
         document.getElementById('searchResults').style.display = 'none';
         document.getElementById('barcodeInput').focus();
     }
+}
+
+function addUnknownProduct() {
+    const barcode = document.getElementById('unknownBarcodeAddBtn').dataset.barcode;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('unknownBarcodeModal'));
+    modal.hide();
+    window.location.href = '/stock/?barcode=' + encodeURIComponent(barcode);
 }
 
 function showError(msg) {

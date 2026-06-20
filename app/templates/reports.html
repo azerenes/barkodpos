@@ -14,7 +14,7 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card border-primary">
             <div class="card-body text-center">
                 <div class="h4 text-primary">{{ total_sales|round(2) }} ₺</div>
@@ -22,7 +22,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card border-success">
             <div class="card-body text-center">
                 <div class="h4 text-success">{{ total_count }}</div>
@@ -30,7 +30,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card border-info">
             <div class="card-body text-center">
                 <div class="h4 text-info">{{ avg_sale|round(2) }} ₺</div>
@@ -38,7 +38,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card border-warning">
             <div class="card-body text-center">
                 <div class="h4 text-{{ 'success' if gross_profit >= 0 else 'danger' }}">{{ gross_profit|round(2) }} ₺</div>
@@ -46,11 +46,19 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card border-danger">
             <div class="card-body text-center">
                 <div class="h4 text-{{ 'success' if net_profit >= 0 else 'danger' }}">{{ net_profit|round(2) }} ₺</div>
                 <small>Net Kâr</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <div class="h4 text-danger">{{ return_total|round(2) }} ₺</div>
+                <small>İade ({{ return_count }} adet)</small>
             </div>
         </div>
     </div>
@@ -127,6 +135,31 @@
     </div>
 </div>
 
+{% if cancelled_sales %}
+<div class="card mt-3">
+    <div class="card-header text-danger">İade Listesi</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0" id="returnTable">
+            <thead>
+                <tr><th>Fiş</th><th>Müşteri</th><th>Tutar</th><th>İndirim</th><th>Ödeme</th><th>Tarih</th></tr>
+            </thead>
+            <tbody>
+                {% for s in cancelled_sales %}
+                <tr>
+                    <td><small>{{ s.receipt_no }}</small></td>
+                    <td>{{ s.customer.name if s.customer else '-' }}</td>
+                    <td class="fw-bold text-danger">{{ s.grand_total }} ₺</td>
+                    <td>{{ s.discount }} ₺</td>
+                    <td><span class="badge bg-secondary">{{ s.payment_method }}</span></td>
+                    <td><small>{{ s.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 <script src="{{ url_for('static', filename='lib/chart.umd.min.js') }}"></script>
 <script>
 const paymentLabels = [];
@@ -177,7 +210,8 @@ new Chart(document.getElementById('productChart'), {
 
 function exportExcel() {
     const table = document.getElementById('salesTable');
-    let csv = 'Fiş No,Müşteri,Tutar,İndirim,Ödeme,Tarih\n';
+    const returnTable = document.getElementById('returnTable');
+    let csv = 'Fiş No,Müşteri,Tutar,İndirim,Ödeme,Tarih,Tür\n';
     table.querySelectorAll('tbody tr').forEach(row => {
         const cols = row.querySelectorAll('td');
         if (cols.length >= 6) {
@@ -186,9 +220,22 @@ function exportExcel() {
                    cols[2].textContent.trim().replace(' ₺','') + ',' +
                    cols[3].textContent.trim() + ',' +
                    cols[4].textContent.trim() + ',' +
-                   cols[5].textContent.trim() + '\n';
+                   cols[5].textContent.trim() + ',Satış\n';
         }
     });
+    if (returnTable) {
+        returnTable.querySelectorAll('tbody tr').forEach(row => {
+            const cols = row.querySelectorAll('td');
+            if (cols.length >= 6) {
+                csv += cols[0].textContent.trim() + ',' +
+                       cols[1].textContent.trim() + ',' +
+                       cols[2].textContent.trim().replace(' ₺','') + ',' +
+                       cols[3].textContent.trim() + ',' +
+                       cols[4].textContent.trim() + ',' +
+                       cols[5].textContent.trim() + ',İade\n';
+            }
+        });
+    }
     const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);

@@ -16,7 +16,10 @@ def pos():
     products = Product.query.filter_by(is_active=True).order_by(Product.name).limit(30).all()
     categories = Category.query.order_by(Category.name).all()
     recent_sales = Sale.query.filter_by(status='completed').order_by(Sale.created_at.desc()).limit(20).all()
-    return render_template('pos.html', customers=customers, products=products, categories=categories, recent_sales=recent_sales)
+    quick_products = Product.query.filter_by(is_active=True, is_quick_product=True).order_by(Product.name).all()
+    if not quick_products:
+        quick_products = products
+    return render_template('pos.html', customers=customers, products=quick_products, categories=categories, recent_sales=recent_sales)
 
 @pos_bp.route('/search-product')
 @login_required

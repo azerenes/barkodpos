@@ -21,13 +21,17 @@ def reports():
     start_date, end_date = period_map.get(period, (today, today + timedelta(days=1)))
 
     try:
-        sales = Sale.query.filter(
-            Sale.created_at >= start_date, Sale.created_at < end_date,
-            Sale.status == 'completed'
+        all_sales = Sale.query.filter(
+            Sale.created_at >= start_date, Sale.created_at < end_date
         ).order_by(Sale.created_at.desc()).all()
+
+        sales = [s for s in all_sales if s.status == 'completed']
+        cancelled_sales = [s for s in all_sales if s.status == 'cancelled']
 
         total_sales = sum(float(s.grand_total) for s in sales)
         total_count = len(sales)
+        return_total = sum(float(s.grand_total) for s in cancelled_sales)
+        return_count = len(cancelled_sales)
         avg_sale = total_sales / total_count if total_count > 0 else 0
 
         product_stats = db.session.query(
@@ -75,15 +79,17 @@ def reports():
         ).count()
 
     except Exception:
-        sales, product_stats, payment_stats = [], [], []
+        sales, cancelled_sales, product_stats, payment_stats = [], [], [], []
         total_sales = total_count = avg_sale = 0
+        return_total = return_count = 0
         gross_profit = net_profit = total_expenses = 0
         cash_total = card_total = 0
         cash_count = 0
 
     return render_template('reports.html',
-        period=period, sales=sales, total_sales=total_sales,
-        total_count=total_count, avg_sale=avg_sale,
+        period=period, sales=sales, cancelled_sales=cancelled_sales,
+        total_sales=total_sales, total_count=total_count, avg_sale=avg_sale,
+        return_total=return_total, return_count=return_count,
         product_stats=product_stats, payment_stats=payment_stats,
         gross_profit=gross_profit, net_profit=net_profit,
         total_expenses=total_expenses,

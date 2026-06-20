@@ -382,6 +382,16 @@ def set_product_unpack(id):
     flash(f'{qty} adet set ürün açıldı, bileşenler stoğa eklendi', 'success')
     return redirect(url_for('stock.set_product_detail', id=id))
 
+@stock_bp.route('/toggle-quick/<int:id>', methods=['POST'])
+@login_required
+def toggle_quick(id):
+    product = Product.query.get(id)
+    if not product:
+        return jsonify({'error': 'Ürün bulunamadı'}), 404
+    product.is_quick_product = not product.is_quick_product
+    db.session.commit()
+    return jsonify({'success': True, 'is_quick_product': product.is_quick_product})
+
 @stock_bp.route('/add-category-ajax', methods=['POST'])
 @login_required
 def add_category_ajax():

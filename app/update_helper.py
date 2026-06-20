@@ -1,6 +1,6 @@
 import os, sys, json, urllib.request, urllib.error, zipfile, tempfile, shutil, subprocess, ssl
 
-CURRENT_VERSION = '1.1.3'
+CURRENT_VERSION = '1.2.0'
 GITHUB_OWNER = 'azerenes'
 GITHUB_REPO = 'BarkodPOS'
 

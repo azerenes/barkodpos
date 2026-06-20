@@ -57,6 +57,9 @@
                     <td>{{ p.min_stock_qty }}</td>
                     <td>{{ p.unit }}</td>
                     <td>
+                        <button class="btn btn-sm btn-outline-warning" onclick="toggleQuick({{ p.id }})" title="Hızlı Satış">
+                            <i class="bi {{ 'bi-star-fill text-warning' if p.is_quick_product else 'bi-star' }}"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#editModal{{ p.id }}"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
@@ -247,6 +250,15 @@
 {% endfor %}
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const barcode = params.get('barcode');
+    if (barcode) {
+        document.querySelector('#addProductModal input[name="barcode"]').value = barcode;
+        new bootstrap.Modal(document.getElementById('addProductModal')).show();
+    }
+});
+
 function filterStock() {
     const query = document.getElementById('stockSearch').value.toLowerCase();
     const cat = document.getElementById('categoryFilter').value;
@@ -255,6 +267,19 @@ function filterStock() {
         const show = (!query || text.includes(query)) &&
                      (!cat || row.querySelector('td:nth-child(3)').textContent.trim() === document.querySelector('#categoryFilter option:checked').textContent.trim());
         row.style.display = show ? '' : 'none';
+    });
+}
+
+function toggleQuick(id) {
+    var btn = event.target.closest('button');
+    var icon = btn.querySelector('i');
+    icon.className = 'bi bi-star-fill text-warning';
+    fetch('/stock/toggle-quick/' + id, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            icon.className = d.is_quick_product ? 'bi bi-star-fill text-warning' : 'bi bi-star';
+        }
     });
 }
 
