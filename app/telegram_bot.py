@@ -1,9 +1,6 @@
-import asyncio
 import threading
 import logging
 from datetime import date
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
 
 BARCODE, NAME, PRICE, STOCK = range(4)
 
@@ -15,7 +12,17 @@ class BarkodPOSBot:
         self.allowed_chat_ids = []
         self.application = None
         self._thread = None
-        self._loop = None
+        self._available = False
+
+    def _check_imports(self):
+        try:
+            global Update, ContextTypes, Application, CommandHandler, MessageHandler, ConversationHandler, filters
+            from telegram import Update
+            from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
+            self._available = True
+        except Exception as e:
+            self._available = False
+            logging.warning(f'Telegram bot: imports failed ({e})')
 
     def _get_settings(self):
         with self.app.app_context():
@@ -26,10 +33,10 @@ class BarkodPOSBot:
             raw = (chat_s.value or '').strip() if chat_s else ''
             self.allowed_chat_ids = [int(x.strip()) for x in raw.split(',') if x.strip().lstrip('-').isdigit()]
 
-    def _auth(self, update: Update) -> bool:
+    def _auth(self, update) -> bool:
         return update.effective_chat.id in self.allowed_chat_ids
 
-    async def _start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _start(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return
@@ -43,7 +50,7 @@ class BarkodPOSBot:
             '/yardim - Yard\u0131m'
         )
 
-    async def _yardim(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _yardim(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return
@@ -56,7 +63,7 @@ class BarkodPOSBot:
             '/yardim - Bu mesaj\u0131 g\u00f6sterir'
         )
 
-    async def _stok(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _stok(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return
@@ -80,7 +87,7 @@ class BarkodPOSBot:
                 lines.append(f'\n...ve {len(products) - 50} \u00fcr\u00fcn daha')
             await update.message.reply_text('\n'.join(lines), parse_mode='Markdown')
 
-    async def _stokkontrol(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _stokkontrol(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return
@@ -97,8 +104,7 @@ class BarkodPOSBot:
             if not product:
                 await update.message.reply_text('\u274c \u00dcr\u00fcn bulunamad\u0131.')
                 return
-            is_stockless = product.is_stockless
-            durum = '\U0001f4e6 Stoksuz' if is_stockless else '\U0001f4e6 Stoklu'
+            durum = '\U0001f4e6 Stoksuz' if product.is_stockless else '\U0001f4e6 Stoklu'
             await update.message.reply_text(
                 f'\U0001f4e6 *{product.name}*\n'
                 f'Barkod: `{product.barcode}`\n'
@@ -112,24 +118,24 @@ class BarkodPOSBot:
                 parse_mode='Markdown'
             )
 
-    async def _urunekle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_start(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return ConversationHandler.END
         await update.message.reply_text('\u00dcr\u00fcn barkod numaras\u0131n\u0131 girin:')
         return BARCODE
 
-    async def _urunekle_barcode(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_barcode(self, update, context):
         context.user_data['barcode'] = update.message.text.strip()
         await update.message.reply_text('\u00dcr\u00fcn ad\u0131n\u0131 girin:')
         return NAME
 
-    async def _urunekle_name(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_name(self, update, context):
         context.user_data['name'] = update.message.text.strip()
         await update.message.reply_text('Sat\u0131\u015f fiyat\u0131n\u0131 girin (\u00f6rn: 50):')
         return PRICE
 
-    async def _urunekle_price(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_price(self, update, context):
         try:
             context.user_data['price'] = float(update.message.text.strip().replace(',', '.'))
         except ValueError:
@@ -138,7 +144,7 @@ class BarkodPOSBot:
         await update.message.reply_text('Stok miktar\u0131n\u0131 girin (stoksuz \u00fcr\u00fcn i\u00e7in 0):')
         return STOCK
 
-    async def _urunekle_stock(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_stock(self, update, context):
         try:
             stock = float(update.message.text.strip().replace(',', '.'))
         except ValueError:
@@ -174,11 +180,11 @@ class BarkodPOSBot:
                 await update.message.reply_text(f'\u274c Hata: {str(e)}')
         return ConversationHandler.END
 
-    async def _urunekle_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _urunekle_cancel(self, update, context):
         await update.message.reply_text('\u274c \u0130\u015flem iptal edildi.')
         return ConversationHandler.END
 
-    async def _rapor(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _rapor(self, update, context):
         if not self._auth(update):
             await update.message.reply_text('\u274c Yetkiniz yok.')
             return
@@ -204,7 +210,7 @@ class BarkodPOSBot:
                 parse_mode='Markdown'
             )
 
-    async def _error(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def _error(self, update, context):
         logging.error(f'Telegram bot error: {context.error}')
 
     def _build(self):
@@ -228,6 +234,10 @@ class BarkodPOSBot:
         self.application.add_error_handler(self._error)
 
     def run(self):
+        self._check_imports()
+        if not self._available:
+            logging.warning('Telegram bot: telegram library not available')
+            return
         self._get_settings()
         if not self.token:
             logging.warning('Telegram bot: token not configured, not starting')

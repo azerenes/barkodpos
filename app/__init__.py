@@ -1,3 +1,4 @@
+import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text as sa_text
@@ -184,11 +185,15 @@ _bot_instance = None
 
 def start_telegram_bot(app):
     global _bot_instance
-    if _bot_instance is not None:
-        _bot_instance.stop()
-    from app.telegram_bot import BarkodPOSBot
-    _bot_instance = BarkodPOSBot(app)
-    _bot_instance.start()
+    try:
+        if _bot_instance is not None:
+            _bot_instance.stop()
+        from app.telegram_bot import BarkodPOSBot
+        _bot_instance = BarkodPOSBot(app)
+        _bot_instance.start()
+    except Exception as e:
+        logging.warning(f'Telegram bot baslatilamadi: {e}')
+        _bot_instance = None
 
 def stop_telegram_bot():
     global _bot_instance
