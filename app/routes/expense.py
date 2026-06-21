@@ -43,7 +43,7 @@ def add_expense():
             category=category,
             description=request.form.get('description', '').strip(),
             payment_method=request.form.get('payment_method', 'cash'),
-            expense_date=datetime.utcnow()
+            expense_date=datetime.now()
         )
         db.session.add(expense)
         db.session.commit()

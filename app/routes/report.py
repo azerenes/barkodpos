@@ -8,7 +8,7 @@ import json, os, shutil
 report_bp = Blueprint('report', __name__, url_prefix='/report')
 
 def get_period_range(period):
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     if period == 'today':
         return today, today + timedelta(days=1)
     elif period == 'week':
@@ -210,7 +210,7 @@ def reset_sales():
         from config import get_data_dir
         db_path = os.path.join(get_data_dir(), 'barkodpos.db')
         backup_path = os.path.join(get_data_dir(),
-            f'sales_backup_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db')
+            f'sales_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db')
         if os.path.exists(db_path):
             shutil.copy2(db_path, backup_path)
 
@@ -247,7 +247,7 @@ def reset_sales():
 @report_bp.route('/weekly-data')
 @login_required
 def weekly_data():
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
     labels = []
     totals = []
@@ -264,7 +264,7 @@ def weekly_data():
 @report_bp.route('/payment-data')
 @login_required
 def payment_data():
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     cash = db.session.query(db.func.sum(Sale.grand_total)).filter(
         db.func.date(Sale.created_at) == today, Sale.payment_method == 'cash', Sale.status == 'completed'
     ).scalar() or 0

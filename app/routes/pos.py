@@ -79,7 +79,7 @@ def quick_sale():
         cat_id = cat.id if cat else 1
 
         if not barcode_input:
-            barcode = f"QS-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+            barcode = f"QS-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         else:
             barcode = barcode_input
 
@@ -227,7 +227,7 @@ def complete_sale():
             if payment_method not in ['cash', 'credit_card']:
                 return jsonify({'error': 'Geçersiz ödeme yöntemi'}), 400
 
-            receipt_no = f"BP{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}{get_user_id()}{random.randint(10,99)}"
+            receipt_no = f"BP{datetime.now().strftime('%Y%m%d%H%M%S%f')}{get_user_id()}{random.randint(10,99)}"
 
             total_amount = 0
             tax_amount = 0
@@ -356,7 +356,7 @@ def return_sale():
             if not sale_items:
                 return jsonify({'error': 'Satışa ait ürün bulunamadı'}), 404
 
-            receipt_no = f"RI{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}{get_user_id()}{random.randint(10,99)}"
+            receipt_no = f"RI{datetime.now().strftime('%Y%m%d%H%M%S%f')}{get_user_id()}{random.randint(10,99)}"
             return_total = 0
 
             for si in sale_items:

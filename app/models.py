@@ -9,7 +9,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default='employee')
     branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Branch(db.Model):
     __tablename__ = 'branches'
@@ -17,7 +17,7 @@ class Branch(db.Model):
     name = db.Column(db.String(150), nullable=False)
     address = db.Column(db.Text)
     phone = db.Column(db.String(20))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     users = db.relationship('User', backref='branch', lazy=True)
 
 class Category(db.Model):
@@ -25,7 +25,7 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     products = db.relationship('Product', backref='category', lazy=True)
 
 class Product(db.Model):
@@ -48,8 +48,8 @@ class Product(db.Model):
     is_set = db.Column(db.Boolean, default=False)
     is_quick_product = db.Column(db.Boolean, default=False)
     is_stockless = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 class Customer(db.Model):
     __tablename__ = 'customers'
@@ -61,7 +61,7 @@ class Customer(db.Model):
     tax_office = db.Column(db.String(100))
     tax_number = db.Column(db.String(50))
     balance = db.Column(db.Numeric(10,2), default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     sales = db.relationship('Sale', backref='customer', lazy=True)
     payments = db.relationship('Payment', backref='customer', lazy=True)
 
@@ -78,7 +78,7 @@ class Sale(db.Model):
     grand_total = db.Column(db.Numeric(10,2), default=0)
     payment_method = db.Column(db.String(20), default='cash')
     status = db.Column(db.Enum('completed', 'cancelled'), default='completed')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     items = db.relationship('SaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')
     user = db.relationship('User', backref='sales')
 
@@ -105,7 +105,7 @@ class StockMovement(db.Model):
     type = db.Column(db.Enum('entry', 'exit', 'transfer_in', 'transfer_out', 'sale', 'return'), nullable=False)
     quantity = db.Column(db.Numeric(10,2), nullable=False)
     description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     product = db.relationship('Product')
     user = db.relationship('User', backref='stock_movements')
 
@@ -126,7 +126,7 @@ class Supplier(db.Model):
     tax_number = db.Column(db.String(50))
     contact_person = db.Column(db.String(100))
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     products = db.relationship('Product', backref='supplier', lazy=True)
 
 class Expense(db.Model):
@@ -138,8 +138,8 @@ class Expense(db.Model):
     category = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     payment_method = db.Column(db.Enum('cash', 'credit_card', 'bank_transfer'), default='cash')
-    expense_date = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expense_date = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     user = db.relationship('User', backref='expenses')
 
 class PurchaseInvoice(db.Model):
@@ -149,10 +149,10 @@ class PurchaseInvoice(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
     invoice_no = db.Column(db.String(100))
-    invoice_date = db.Column(db.DateTime, default=datetime.utcnow)
+    invoice_date = db.Column(db.DateTime, default=datetime.now)
     total_amount = db.Column(db.Numeric(10,2), default=0)
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     supplier = db.relationship('Supplier')
     user = db.relationship('User')
 
@@ -176,7 +176,7 @@ class PriceHistory(db.Model):
     old_price = db.Column(db.Numeric(10,2), default=0)
     new_price = db.Column(db.Numeric(10,2), default=0)
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     product = db.relationship('Product')
     user = db.relationship('User')
 
@@ -191,7 +191,7 @@ class CashRegister(db.Model):
     difference = db.Column(db.Numeric(10,2), default=0)
     status = db.Column(db.Enum('open', 'closed'), default='open')
     notes = db.Column(db.Text)
-    opened_at = db.Column(db.DateTime, default=datetime.utcnow)
+    opened_at = db.Column(db.DateTime, default=datetime.now)
     closed_at = db.Column(db.DateTime)
     user = db.relationship('User')
 
@@ -223,7 +223,7 @@ class StockCount(db.Model):
     total_items = db.Column(db.Integer, default=0)
     matched_items = db.Column(db.Integer, default=0)
     mismatch_items = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     completed_at = db.Column(db.DateTime)
     user = db.relationship('User')
 
@@ -247,7 +247,7 @@ class Payment(db.Model):
     amount = db.Column(db.Numeric(10,2), nullable=False)
     type = db.Column(db.Enum('payment', 'collection'), nullable=False)
     description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     user = db.relationship('User')
 
 class SavedReport(db.Model):
@@ -259,5 +259,5 @@ class SavedReport(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     data_json = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     user = db.relationship('User')

@@ -100,10 +100,10 @@ def backup():
     try:
         import sqlite3, io, datetime
         db_path = os.path.join(get_data_dir(), 'barkodpos.db')
-        backup_path = os.path.join(get_data_dir(), f'backup_{datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db')
+        backup_path = os.path.join(get_data_dir(), f'backup_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.db')
         if os.path.exists(db_path):
             shutil.copy2(db_path, backup_path)
-            flash(f'Yedekleme tamam: backup_{datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db', 'success')
+            flash(f'Yedekleme tamam: backup_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.db', 'success')
         else:
             flash('Veritabanı dosyası bulunamadı', 'error')
     except Exception as e:
@@ -128,7 +128,7 @@ def restore():
     try:
         db_path = os.path.join(get_data_dir(), 'barkodpos.db')
         if os.path.exists(db_path):
-            ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+            ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             shutil.copy2(db_path, os.path.join(get_data_dir(), f'pre_restore_{ts}.db'))
         shutil.copy2(backup_path, db_path)
         flash(f'Veritabanı geri yüklendi: {backup_file}. Uygulama yeniden başlatıldığında etkin olur.', 'success')

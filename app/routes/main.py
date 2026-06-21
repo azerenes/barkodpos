@@ -10,7 +10,7 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/dashboard/')
 @login_required
 def dashboard():
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     today_sales = Sale.query.filter(
         db.func.date(Sale.created_at) == today,
         Sale.status == 'completed'
@@ -59,7 +59,7 @@ def diagnostic_info():
         'user_name': get_user_name(),
         'branch_id': get_branch_id(),
         'is_admin': is_admin(),
-        'time': datetime.utcnow().isoformat(),
+        'time': datetime.now().isoformat(),
     }
     try:
         from config import get_data_dir

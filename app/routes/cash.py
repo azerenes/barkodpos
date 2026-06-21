@@ -9,7 +9,7 @@ cash_bp = Blueprint('cash', __name__, url_prefix='/cash')
 @cash_bp.route('/')
 @login_required
 def cash_register():
-    today = datetime.utcnow().date()
+    today = datetime.now().date()
     today_sales = Sale.query.filter(
         db.func.date(Sale.created_at) == today,
         Sale.status == 'completed'

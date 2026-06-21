@@ -141,7 +141,7 @@ def invoice_new():
             quantities = request.form.getlist('qty[]')
             prices = request.form.getlist('price[]')
 
-            inv_date = datetime.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.utcnow()
+            inv_date = datetime.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.now()
 
             total = 0
             invoice = PurchaseInvoice(

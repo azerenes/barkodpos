@@ -319,7 +319,7 @@ def set_product_new():
     if request.method == 'POST':
         try:
             name = request.form.get('name', '').strip()
-            barcode = request.form.get('barcode', '').strip() or f'SET-{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+            barcode = request.form.get('barcode', '').strip() or f'SET-{datetime.now().strftime("%Y%m%d%H%M%S%f")}'
             sale_price = round(float(request.form.get('sale_price', 0)), 2)
             cat_id = request.form.get('category_id')
             component_ids = request.form.getlist('component_id[]')

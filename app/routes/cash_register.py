@@ -50,7 +50,7 @@ def close_register():
         reg.closing_balance = actual
         reg.difference = diff
         reg.status = 'closed'
-        reg.closed_at = datetime.utcnow()
+        reg.closed_at = datetime.now()
         db.session.commit()
 
         if diff > 0:

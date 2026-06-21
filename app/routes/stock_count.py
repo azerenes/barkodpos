@@ -110,7 +110,7 @@ def complete_count(id):
     count.matched_items = matched
     count.mismatch_items = mismatched
     count.status = 'completed'
-    count.completed_at = datetime.utcnow()
+    count.completed_at = datetime.now()
     db.session.commit()
     return jsonify({'success': True, 'matched': matched, 'mismatched': mismatched, 'total': len(items)})
 
