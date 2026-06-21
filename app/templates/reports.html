@@ -9,67 +9,68 @@
             <a href="?period=month" class="btn btn-sm {{ 'btn-primary' if period == 'month' else 'btn-outline-primary' }}">Bu Ay</a>
             <a href="?period=year" class="btn btn-sm {{ 'btn-primary' if period == 'year' else 'btn-outline-primary' }}">Bu Yıl</a>
         </div>
-        <button class="btn btn-sm btn-success ms-1" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+        <button class="btn btn-sm btn-success ms-1" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i></button>
+        <button class="btn btn-sm btn-info ms-1" onclick="saveReport()" id="btnSaveReport"><i class="bi bi-save"></i> Kaydet</button>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-2">
+<div class="row g-2 mb-4">
+    <div class="col-4 col-md-2">
         <div class="card border-primary">
-            <div class="card-body text-center">
-                <div class="h4 text-primary">{{ total_sales|round(2) }} ₺</div>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-primary">{{ total_sales|round(2) }} ₺</div>
                 <small>Toplam Satış</small>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-4 col-md-2">
         <div class="card border-success">
-            <div class="card-body text-center">
-                <div class="h4 text-success">{{ total_count }}</div>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-success">{{ total_count }}</div>
                 <small>Satış Adedi</small>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-4 col-md-2">
         <div class="card border-info">
-            <div class="card-body text-center">
-                <div class="h4 text-info">{{ avg_sale|round(2) }} ₺</div>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-info">{{ avg_sale|round(2) }} ₺</div>
                 <small>Ortalama Sepet</small>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-4 col-md-2">
         <div class="card border-warning">
-            <div class="card-body text-center">
-                <div class="h4 text-{{ 'success' if gross_profit >= 0 else 'danger' }}">{{ gross_profit|round(2) }} ₺</div>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-{{ 'success' if gross_profit >= 0 else 'danger' }}">{{ gross_profit|round(2) }} ₺</div>
                 <small>Brüt Kâr</small>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-4 col-md-2">
         <div class="card border-danger">
-            <div class="card-body text-center">
-                <div class="h4 text-{{ 'success' if net_profit >= 0 else 'danger' }}">{{ net_profit|round(2) }} ₺</div>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-{{ 'success' if net_profit >= 0 else 'danger' }}">{{ net_profit|round(2) }} ₺</div>
                 <small>Net Kâr</small>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-4 col-md-2">
         <div class="card border-danger">
-            <div class="card-body text-center">
-                <div class="h4 text-danger">{{ return_total|round(2) }} ₺</div>
-                <small>İade ({{ return_count }} adet)</small>
+            <div class="card-body text-center py-2">
+                <div class="h5 text-danger">{{ return_total|round(2) }} ₺</div>
+                <small>İade ({{ return_count }})</small>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
+<div class="row g-2 mb-4">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">Ödeme Yöntemleri Dağılımı</div>
+            <div class="card-header">Ödeme Yöntemleri</div>
             <div class="card-body">
-                <canvas id="paymentChart" height="200"></canvas>
+                <canvas id="paymentChart" height="180"></canvas>
             </div>
         </div>
     </div>
@@ -77,31 +78,31 @@
         <div class="card">
             <div class="card-header">En Çok Satan Ürünler</div>
             <div class="card-body">
-                <canvas id="productChart" height="200"></canvas>
+                <canvas id="productChart" height="180"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card border-success h-100">
+<div class="row g-2 mb-4">
+    <div class="col-4">
+        <div class="card border-success">
             <div class="card-body text-center py-2">
                 <div class="h5 text-success">{{ cash_total|round(2) }} ₺</div>
                 <small>Nakit ({{ cash_count }} adet)</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-info h-100">
+    <div class="col-4">
+        <div class="card border-info">
             <div class="card-body text-center py-2">
                 <div class="h5 text-info">{{ card_total|round(2) }} ₺</div>
                 <small>Kredi Kartı</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-secondary h-100">
+    <div class="col-4">
+        <div class="card border-secondary">
             <div class="card-body text-center py-2">
                 <div class="h5">{{ total_expenses|round(2) }} ₺</div>
                 <small>Giderler</small>
@@ -110,7 +111,30 @@
     </div>
 </div>
 
-<div class="card">
+{% if daily_breakdown|length > 1 %}
+<div class="card mb-4">
+    <div class="card-header">Günlük Döküm</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr><th>Tarih</th><th>Gün</th><th>Satış</th><th>Adet</th></tr>
+            </thead>
+            <tbody>
+                {% for d in daily_breakdown %}
+                <tr>
+                    <td>{{ d.date }}</td>
+                    <td>{{ d.day_name }}</td>
+                    <td class="fw-bold">{{ d.total|round(2) }} ₺</td>
+                    <td>{{ d.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
     <div class="card-header">Satış Listesi</div>
     <div class="card-body p-0">
         <table class="table table-sm mb-0" id="salesTable">
@@ -136,7 +160,7 @@
 </div>
 
 {% if cancelled_sales %}
-<div class="card mt-3">
+<div class="card mb-4">
     <div class="card-header text-danger">İade Listesi</div>
     <div class="card-body p-0">
         <table class="table table-sm mb-0" id="returnTable">
@@ -157,6 +181,43 @@
             </tbody>
         </table>
     </div>
+</div>
+{% endif %}
+
+{% if saved_reports %}
+<div class="card mb-4">
+    <div class="card-header">
+        <span>Kayıtlı Raporlar</span>
+        <button class="btn btn-sm btn-outline-danger float-end" onclick="resetSales()"><i class="bi bi-trash"></i> Satışları Sıfırla</button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr><th>Rapor Adı</th><th>Dönem</th><th>Toplam</th><th>Kâr</th><th>Kayıt</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for r in saved_reports %}
+                {% set rd = r.data_json|from_json %}
+                <tr>
+                    <td>{{ r.name }}</td>
+                    <td><span class="badge bg-secondary">{{ r.period }}</span></td>
+                    <td class="fw-bold">{{ rd.total_sales|round(2) if rd.total_sales else 0 }} ₺</td>
+                    <td class="text-{{ 'success' if rd.net_profit and rd.net_profit >= 0 else 'danger' }}">{{ rd.net_profit|round(2) if rd.net_profit else 0 }} ₺</td>
+                    <td><small>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                    <td><button class="btn btn-sm btn-outline-danger py-0" onclick="deleteReport({{ r.id }})"><i class="bi bi-x"></i></button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-header">
+        <span>Kayıtlı Raporlar</span>
+        <button class="btn btn-sm btn-outline-danger float-end" onclick="resetSales()"><i class="bi bi-trash"></i> Satışları Sıfırla</button>
+    </div>
+    <div class="card-body text-center text-muted">Henüz kayıtlı rapor yok. Raporu kaydetmek için <strong>Kaydet</strong> butonunu kullanın.</div>
 </div>
 {% endif %}
 
@@ -214,6 +275,54 @@ function exportExcel() {
     iframe.src = '/report/export-csv?period={{ period }}';
     document.body.appendChild(iframe);
     setTimeout(() => iframe.remove(), 10000);
+}
+
+function saveReport() {
+    var btn = document.getElementById('btnSaveReport');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kaydediliyor...';
+    fetch('/report/save-report?period={{ period }}', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                alert('Rapor kaydedildi: ' + d.name);
+                location.reload();
+            } else {
+                alert('Hata: ' + (d.error || 'Bilinmeyen hata'));
+            }
+        })
+        .catch(e => { alert('Kaydetme hatası'); })
+        .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-save"></i> Kaydet'; });
+}
+
+function deleteReport(id) {
+    if (!confirm('Bu raporu silmek istediğinize emin misiniz?')) return;
+    fetch('/report/delete-report/' + id, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => { if (d.success) location.reload(); else alert('Hata: ' + d.error); })
+        .catch(e => alert('Silme hatası'));
+}
+
+function resetSales() {
+    if (!confirm('TÜM SATIŞLAR SİLİNECEK!\n\nBu işlem:\n- Tüm satışları\n- Satış kalemlerini\n- Satış stok hareketlerini\nsilecek ve stokları yeniden hesaplayacak.\n\nÖnce otomatik yedek alınacak.\nDevam etmek istediğinize emin misiniz?')) return;
+    if (!confirm('Bu işlem geri alınamaz! Emin misiniz?')) return;
+    var btn = event.target;
+    if (btn.tagName != 'BUTTON') btn = btn.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sıfırlanıyor...';
+    fetch('/report/reset-sales', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                alert('Satışlar sıfırlandı!\nYedek: ' + (d.backup || 'alındı'));
+                location.reload();
+            } else {
+                alert('Hata: ' + (d.error || 'Bilinmeyen hata'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash"></i> Satışları Sıfırla';
+            }
+        })
+        .catch(e => { alert('Sıfırlama hatası'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i> Satışları Sıfırla'; });
 }
 </script>
 {% endblock %}

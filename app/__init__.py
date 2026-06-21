@@ -1,4 +1,4 @@
-import logging
+import json, logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text as sa_text
@@ -59,6 +59,13 @@ def create_app():
             current_user_is_admin=session.get('role') == 'admin',
             current_user_is_authenticated='user_id' in session
         )
+
+    @app.template_filter('from_json')
+    def from_json_filter(s):
+        try:
+            return json.loads(s)
+        except Exception:
+            return {}
 
     @app.errorhandler(404)
     def not_found(e):
@@ -158,7 +165,6 @@ def create_app():
                         'min_stock_qty': float(p.min_stock_qty or 0),
                         'unit': p.unit, 'is_stockless': p.is_stockless
                     } for p in products]
-                    import json
                     with open(os.path.join(backup_dir, f'stok_fiyat_{today}.json'), 'w', encoding='utf-8') as f:
                         json.dump(snapshot, f, ensure_ascii=False, indent=2)
                 cutoff = date.today() - timedelta(days=30)
