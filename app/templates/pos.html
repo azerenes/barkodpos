@@ -231,6 +231,8 @@
 </div>
 
 <script>
+const autoAddOnScan = {{ 'true' if auto_add_on_scan == '1' else 'false' }};
+
 function esc(str) {
     const d = document.createElement('div');
     d.textContent = str;
@@ -261,6 +263,48 @@ function searchProduct() {
                     const modal = new bootstrap.Modal(document.getElementById('unknownBarcodeModal'));
                     modal.show();
                 }
+                return;
+            }
+            container.innerHTML = products.map((p, i) =>
+                `<button class="list-group-item list-group-item-action py-1" onclick="selectProduct(${i})" data-id="${p.id}">
+                    <strong>${esc(p.name)}</strong> <span class="badge bg-primary">${p.price} ₺</span>
+                    ${p.stockless ? '<span class="badge bg-info">Stoksuz</span>' : `<small class="text-muted">Stok: ${esc(p.stock)}</small>`}
+                    <small class="text-muted">(${esc(p.barcode)})</small>
+                </button>`
+            ).join('');
+            window._searchProducts = products;
+            container.style.display = 'block';
+        });
+}
+
+function searchAndAutoAdd() {
+    const q = document.getElementById('barcodeInput').value.trim();
+    if (!q) { document.getElementById('searchResults').style.display = 'none'; return; }
+
+    fetch(`/pos/search-product?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(products => {
+            const container = document.getElementById('searchResults');
+            if (products.length === 0) {
+                container.style.display = 'none';
+                const barcode = document.getElementById('barcodeInput').value.trim();
+                if (barcode.length > 0) {
+                    document.getElementById('unknownBarcodeDisplay').textContent = 'Barkod: ' + barcode;
+                    document.getElementById('unknownBarcodeAddBtn').dataset.barcode = barcode;
+                    document.getElementById('unknownProductName').value = '';
+                    document.getElementById('unknownProductPrice').value = '';
+                    document.getElementById('unknownProductStockless').checked = false;
+                    document.getElementById('unknownProductError').textContent = '';
+                    const modal = new bootstrap.Modal(document.getElementById('unknownBarcodeModal'));
+                    modal.show();
+                }
+                return;
+            }
+            if (autoAddOnScan && products.length === 1) {
+                addToCart(products[0]);
+                document.getElementById('barcodeInput').value = '';
+                container.style.display = 'none';
+                document.getElementById('barcodeInput').focus();
                 return;
             }
             container.innerHTML = products.map((p, i) =>
@@ -552,7 +596,7 @@ function returnSale(saleId) {
 }
 
 document.getElementById('barcodeInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') searchProduct();
+    if (e.key === 'Enter') searchAndAutoAdd();
 });
 
 document.getElementById('barcodeInput').addEventListener('input', function() {

@@ -70,6 +70,11 @@
                         </div>
                     </div>
                     <div class="small text-muted">Döviz kurları raporlarda ve POS'ta dönüşüm için kullanılır. 0 bırakılırsa kullanılmaz.</div>
+                    <hr>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" name="auto_add_on_scan" id="autoAddOnScan" value="1" {{ 'checked' if auto_add_on_scan == '1' }}>
+                        <label class="form-check-label" for="autoAddOnScan">Barkod okutunca tek sonuç varsa direkt sepete ekle</label>
+                    </div>
                     <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-save"></i> Kaydet</button>
                 </form>
             </div>

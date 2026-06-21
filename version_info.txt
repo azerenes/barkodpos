@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1,5,1,0),
-    prodvers=(1,5,1,0),
+    filevers=(1,5,2,0),
+    prodvers=(1,5,2,0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -16,12 +16,12 @@ VSVersionInfo(
           '040904B0',
           [StringStruct('CompanyName', 'BarkodPOS'),
           StringStruct('FileDescription', 'BarkodPOS - Barkodlu Satis ve Stok Programi'),
-          StringStruct('FileVersion', '1.5.1.0'),
+          StringStruct('FileVersion', '1.5.2.0'),
           StringStruct('InternalName', 'BarkodPOS'),
           StringStruct('LegalCopyright', 'Copyright (C) 2026 BarkodPOS'),
           StringStruct('OriginalFilename', 'BarkodPOS.exe'),
           StringStruct('ProductName', 'BarkodPOS'),
-          StringStruct('ProductVersion', '1.5.1.0')])
+          StringStruct('ProductVersion', '1.5.2.0')])
       ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]

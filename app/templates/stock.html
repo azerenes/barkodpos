@@ -103,21 +103,16 @@
                     <div class="mb-2"><label>Barkod <span class="text-danger">*</span></label><input type="text" name="barcode" class="form-control" required></div>
                     <div class="mb-2"><label>Ürün Adı <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required></div>
                     <div class="mb-2">
-                        <label>Birim</label>
-                        <select name="unit" class="form-select">
-                            <option value="Adet">Adet</option>
-                            <option value="Düzine">Düzine</option>
-                            <option value="Kg">Kg</option>
-                            <option value="Lt">Lt</option>
-                            <option value="Paket">Paket</option>
-                            <option value="Koli">Koli</option>
-                            <option value="Set">Set</option>
-                        </select>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input type="checkbox" class="form-check-input" name="is_stockless" id="addStockless">
-                        <label class="form-check-label" for="addStockless">Stok takibi yapılmasın</label>
-                    </div>
+                        <label>Kategori</label>
+                        <div class="input-group">
+                            <select name="category_id" class="form-select" id="addCategorySelect">
+                                <option value="">- Seçin -</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-primary" type="button" onclick="showAddCategory()" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
+                        </div>
                         <div id="addCategoryInline" style="display:none" class="mt-1 input-group">
                             <input type="text" id="newCategoryName" class="form-control" placeholder="Kategori adı">
                             <button class="btn btn-success" type="button" onclick="saveCategory()"><i class="bi bi-check"></i></button>
@@ -152,7 +147,11 @@
                                 <option value="Set">Set</option>
                             </select>
                         </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" name="is_stockless" id="addStockless" onchange="toggleStockFields(this)">
+                        <label class="form-check-label" for="addStockless">Stok takibi yapılmasın</label>
                     </div>
+                </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Ürün Ekle</button>
                 </div>
@@ -160,6 +159,7 @@
         </div>
     </div>
 </div>
+
 
 <div class="modal fade" id="csvModal">
     <div class="modal-dialog">
@@ -228,7 +228,7 @@
                         </select>
                     </div>
                     <div class="form-check mb-2">
-                        <input type="checkbox" class="form-check-input" name="is_stockless" id="editStockless{{ p.id }}" {{ 'checked' if p.is_stockless }}>
+                        <input type="checkbox" class="form-check-input" name="is_stockless" id="editStockless{{ p.id }}" {{ 'checked' if p.is_stockless }} onchange="toggleStockFields(this)">
                         <label class="form-check-label" for="editStockless{{ p.id }}">Stok takibi yapılmasın</label>
                     </div>
                 </div>
@@ -325,6 +325,19 @@ function saveCategory() {
             hideAddCategory();
         } else { alert('Hata: ' + data.error); }
     }).catch(e => alert('Hata: ' + e));
+}
+
+function toggleStockFields(checkbox) {
+    const modal = checkbox.closest('.modal');
+    const qty = modal.querySelector('[name="stock_qty"]');
+    const minQty = modal.querySelector('[name="min_stock_qty"]');
+    if (checkbox.checked) {
+        qty.disabled = true; qty.value = '0';
+        minQty.disabled = true; minQty.value = '0';
+    } else {
+        qty.disabled = false;
+        minQty.disabled = false;
+    }
 }
 
 function showEditCategory(btn) {

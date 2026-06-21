@@ -51,6 +51,7 @@ def index():
         pos_timeout=get_setting('pos_timeout', '30'),
         currency_usd=get_setting('currency_usd', '0'),
         currency_eur=get_setting('currency_eur', '0'),
+        auto_add_on_scan=get_setting('auto_add_on_scan', '0'),
         github_repo=f'{GITHUB_OWNER}/{GITHUB_REPO}',
         current_version=CURRENT_VERSION)
 
@@ -83,6 +84,7 @@ def save():
         set_setting('pos_timeout', request.form.get('pos_timeout', '30'))
         set_setting('currency_usd', request.form.get('currency_usd', '0'))
         set_setting('currency_eur', request.form.get('currency_eur', '0'))
+        set_setting('auto_add_on_scan', request.form.get('auto_add_on_scan', '0'))
         db.session.commit()
         flash('Ayarlar kaydedildi', 'success')
     except Exception as e:

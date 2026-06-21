@@ -19,7 +19,9 @@ def pos():
     quick_products = Product.query.filter_by(is_active=True, is_quick_product=True).order_by(Product.name).all()
     if not quick_products:
         quick_products = products
-    return render_template('pos.html', customers=customers, products=quick_products, categories=categories, recent_sales=recent_sales)
+    from app.routes.settings import get_setting
+    auto_add = get_setting('auto_add_on_scan', '0')
+    return render_template('pos.html', customers=customers, products=quick_products, categories=categories, recent_sales=recent_sales, auto_add_on_scan=auto_add)
 
 @pos_bp.route('/search-product')
 @login_required
