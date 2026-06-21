@@ -24,7 +24,7 @@ def index():
     if not is_admin():
         flash('Bu sayfaya erişim yetkiniz yok', 'error')
         return redirect(url_for('main.dashboard'))
-    from app.update_helper import CURRENT_VERSION, GITHUB_OWNER, GITHUB_REPO
+    from app.update_helper import CURRENT_VERSION
     import glob
     backup_dir = get_data_dir()
     backups = sorted([f for f in os.listdir(backup_dir) if f.startswith('backup_') and f.endswith('.db')], reverse=True)
@@ -52,7 +52,6 @@ def index():
         currency_usd=get_setting('currency_usd', '0'),
         currency_eur=get_setting('currency_eur', '0'),
         auto_add_on_scan=get_setting('auto_add_on_scan', '0'),
-        github_repo=f'{GITHUB_OWNER}/{GITHUB_REPO}',
         current_version=CURRENT_VERSION)
 
 @settings_bp.route('/save', methods=['POST'])

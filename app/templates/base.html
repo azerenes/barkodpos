@@ -12,8 +12,8 @@
     {% if current_user_is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="{{ url_for('main.dashboard') }}" style="display:flex;align-items:center;gap:8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" style="width:28px;height:28px;">
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" style="width:30px;height:30px;vertical-align:middle;">
                     <rect x="8" y="8" width="104" height="104" rx="18" stroke="white" stroke-width="7"/>
                     <line x1="35" y1="40" x2="85" y2="40" stroke="white" stroke-width="5" stroke-linecap="round"/>
                     <path d="M35 40 L60 82" stroke="white" stroke-width="4.5" stroke-linecap="round"/>
@@ -25,7 +25,6 @@
                     <circle cx="60" cy="82" r="9" fill="#DC2626"/>
                     <circle cx="60" cy="82" r="3.5" fill="#1A1A1A" opacity="0.3"/>
                 </svg>
-                EVC<span style="position:relative;display:inline-block;width:.4em;text-align:center;color:white;">I</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
