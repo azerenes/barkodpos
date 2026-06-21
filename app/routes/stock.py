@@ -425,6 +425,27 @@ def toggle_quick(id):
     db.session.commit()
     return jsonify({'success': True, 'is_quick_product': product.is_quick_product})
 
+@stock_bp.route('/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_product(id):
+    import shutil, os
+    from config import get_data_dir
+    from datetime import date
+    product = Product.query.get_or_404(id)
+    # create pre-delete backup
+    backup_dir = os.path.join(get_data_dir(), 'backups')
+    os.makedirs(backup_dir, exist_ok=True)
+    db_path = os.path.join(get_data_dir(), 'barkodpos.db')
+    tag = date.today().isoformat()
+    pre_del = os.path.join(backup_dir, f'onsilme_{id}_{tag}.db')
+    if os.path.exists(db_path):
+        shutil.copy2(db_path, pre_del)
+    # soft delete
+    product.is_active = False
+    db.session.commit()
+    flash(f'Ürün silindi (yedek: {pre_del})', 'success')
+    return redirect(url_for('stock.stock_list'))
+
 @stock_bp.route('/add-category-ajax', methods=['POST'])
 @login_required
 def add_category_ajax():

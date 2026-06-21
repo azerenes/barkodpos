@@ -64,6 +64,7 @@
                                 data-bs-target="#editModal{{ p.id }}"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
                                 data-bs-target="#stockEntryModal{{ p.id }}"><i class="bi bi-plus-circle"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ p.id }})" title="Sil"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
                 {% else %}
@@ -160,6 +161,24 @@
     </div>
 </div>
 
+
+<div class="modal fade" id="deleteModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5>Ürünü Sil</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <p><strong id="deleteProductName"></strong> ürününü silmek istediğine emin misin?</p>
+                <p class="text-danger small">Bu işlem geri alınamaz.</p>
+            </div>
+            <div class="modal-footer">
+                <form method="POST" id="deleteForm" action="">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="csvModal">
     <div class="modal-dialog">
@@ -365,6 +384,13 @@ function showEditCategory(btn) {
     inline.querySelector('.btn-outline-secondary').onclick = () => { inline.style.display = 'none'; inline.querySelector('input').value = ''; };
     group.parentElement.appendChild(inline);
     inline.querySelector('input').focus();
+}
+
+function confirmDelete(id) {
+    const name = document.querySelector(`button[onclick="confirmDelete(${id})"]`).closest('tr').querySelector('td:nth-child(2)').textContent.trim();
+    document.getElementById('deleteProductName').textContent = name;
+    document.getElementById('deleteForm').action = `/stock/delete/${id}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 </script>
 {% endblock %}

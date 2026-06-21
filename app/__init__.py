@@ -137,7 +137,7 @@ def create_app():
                     conn.execute(sa_text(stmt))
                 except Exception:
                     pass
-        from datetime import date
+        from datetime import date, timedelta
         backup_dir = os.path.join(get_data_dir(), 'backups')
         os.makedirs(backup_dir, exist_ok=True)
         db_path = os.path.join(get_data_dir(), 'barkodpos.db')
@@ -147,5 +147,34 @@ def create_app():
             if not os.path.exists(backup_file):
                 shutil.copy2(db_path, backup_file)
                 print(f'[Backup] {backup_file}')
+                # also export stock/price list as JSON
+                from app.models import Product
+                products = Product.query.filter_by(is_active=True).all()
+                snapshot = [{
+                    'barcode': p.barcode, 'name': p.name,
+                    'purchase_price': float(p.purchase_price or 0),
+                    'sale_price': float(p.sale_price or 0),
+                    'stock_qty': float(p.stock_qty or 0),
+                    'min_stock_qty': float(p.min_stock_qty or 0),
+                    'unit': p.unit, 'is_stockless': p.is_stockless
+                } for p in products]
+                import json
+                snapshot_path = os.path.join(backup_dir, f'stok_fiyat_{today}.json')
+                with open(snapshot_path, 'w', encoding='utf-8') as f:
+                    json.dump(snapshot, f, ensure_ascii=False, indent=2)
+                print(f'[Backup] {snapshot_path}')
+            # clean backups older than 30 days
+            cutoff = date.today() - timedelta(days=30)
+            for fname in os.listdir(backup_dir):
+                if not (fname.startswith('barkodpos_') or fname.startswith('stok_fiyat_')):
+                    continue
+                fdate_str = fname.split('_')[1].split('.')[0]
+                try:
+                    fdate = date.fromisoformat(fdate_str)
+                    if fdate < cutoff:
+                        os.remove(os.path.join(backup_dir, fname))
+                        print(f'[Backup] Cleaned old: {fname}')
+                except (ValueError, IndexError):
+                    pass
 
     return app
