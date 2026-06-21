@@ -34,7 +34,7 @@ def search_product():
     products = query.order_by(Product.name).limit(15).all()
     return jsonify([{
         'id': p.id, 'barcode': p.barcode, 'name': p.name,
-        'price': round(float(p.sale_price), 2), 'stock': round(float(p.stock_qty), 2), 'unit': p.unit
+        'price': round(float(p.sale_price), 2), 'stock': round(float(p.stock_qty), 2), 'unit': p.unit, 'stockless': p.is_stockless
     } for p in products])
 
 @pos_bp.route('/quick-sale', methods=['POST'])
@@ -83,6 +83,67 @@ def quick_sale():
             'id': product.id, 'barcode': product.barcode,
             'name': product.name, 'price': round(float(product.sale_price), 2),
             'stock': 0, 'unit': 'Adet'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Hata: {str(e)}'}), 500
+
+@pos_bp.route('/add-product', methods=['POST'])
+@login_required
+def add_product():
+    try:
+        data = request.get_json()
+        barcode = (data.get('barcode', '') or '').strip()
+        name = (data.get('name', '') or '').strip()
+        price = round(float(data.get('price', 0)), 2)
+        stockless = bool(data.get('stockless', False))
+
+        if not barcode:
+            return jsonify({'error': 'Barkod gerekli'}), 400
+        if not name:
+            name = f"* {barcode}"
+        if price <= 0:
+            return jsonify({'error': 'Geçersiz fiyat'}), 400
+
+        existing = Product.query.filter_by(barcode=barcode).first()
+        if existing:
+            return jsonify({
+                'id': existing.id, 'barcode': existing.barcode,
+                'name': existing.name, 'price': round(float(existing.sale_price), 2),
+                'stock': round(float(existing.stock_qty), 2), 'unit': existing.unit or 'Adet',
+                'stockless': existing.is_stockless
+            })
+
+        from app.models import Category
+        tax_setting = 0
+        from app.routes.settings import get_setting
+        try:
+            tax_setting = float(get_setting('tax_rate', '0'))
+        except:
+            pass
+
+        cat = Category.query.order_by(Category.id).first()
+        cat_id = cat.id if cat else 1
+
+        product = Product(
+            barcode=barcode,
+            name=name,
+            sale_price=price,
+            purchase_price=price,
+            stock_qty=0,
+            category_id=cat_id,
+            tax_rate=tax_setting,
+            is_active=True,
+            unit='Adet',
+            is_stockless=stockless
+        )
+        db.session.add(product)
+        db.session.commit()
+
+        return jsonify({
+            'id': product.id, 'barcode': product.barcode,
+            'name': product.name, 'price': round(float(product.sale_price), 2),
+            'stock': 0, 'unit': 'Adet', 'stockless': stockless
         })
     except Exception as e:
         db.session.rollback()
@@ -158,7 +219,7 @@ def complete_sale():
                 if qty <= 0:
                     return jsonify({'error': f'Geçersiz miktar: {product.name}'}), 400
 
-                if not product.barcode.startswith('QS-') and float(product.stock_qty) < qty:
+                if not product.barcode.startswith('QS-') and not product.is_stockless and float(product.stock_qty) < qty:
                     return jsonify({'error': f'Yetersiz stok: {product.name} (Stok: {product.stock_qty})'}), 400
 
                 price = round(float(product.sale_price), 2)
@@ -203,7 +264,8 @@ def complete_sale():
                     tax_rate=sd['tax_rate'], tax_amount=sd['tax']
                 ))
 
-                product.stock_qty = round(float(product.stock_qty) - qty, 2)
+                if not product.is_stockless:
+                    product.stock_qty = round(float(product.stock_qty) - qty, 2)
 
                 db.session.add(StockMovement(
                     product_id=product.id, user_id=get_user_id(),
@@ -280,7 +342,8 @@ def return_sale():
                 if not product:
                     continue
                 qty = round(float(si.quantity), 2)
-                product.stock_qty = round(float(product.stock_qty) + qty, 2)
+                if not product.is_stockless:
+                    product.stock_qty = round(float(product.stock_qty) + qty, 2)
                 return_total = round(return_total + float(si.total_price), 2)
 
                 db.session.add(StockMovement(

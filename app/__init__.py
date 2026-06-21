@@ -119,6 +119,7 @@ def create_app():
                 'ALTER TABLE products ADD COLUMN wholesale_min_qty NUMERIC(10,2) DEFAULT 0',
                 'ALTER TABLE products ADD COLUMN is_set BOOLEAN DEFAULT 0',
                 'ALTER TABLE products ADD COLUMN is_quick_product BOOLEAN DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN is_stockless BOOLEAN DEFAULT 0',
             ]:
                 try:
                     conn.execute(sa_text(stmt))

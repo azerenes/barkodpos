@@ -61,7 +61,8 @@ def add_product():
             purchase_price=purchase_price, sale_price=sale_price,
             tax_rate=tax_rate, stock_qty=stock_qty, min_stock_qty=min_stock_qty,
             supplier_id=request.form.get('supplier_id') or None,
-            unit=request.form.get('unit', 'Adet')
+            unit=request.form.get('unit', 'Adet'),
+            is_stockless=bool(request.form.get('is_stockless'))
         )
         db.session.add(product)
         db.session.flush()
@@ -109,6 +110,7 @@ def update_product(id):
         product.unit = request.form.get('unit', 'Adet')
         product.category_id = request.form.get('category_id') or None
         product.supplier_id = request.form.get('supplier_id') or None
+        product.is_stockless = bool(request.form.get('is_stockless'))
         wholesale_price = float(request.form.get('wholesale_price', 0) or 0)
         wholesale_min = float(request.form.get('wholesale_min_qty', 0) or 0)
         if wholesale_price > 0:
@@ -397,13 +399,14 @@ def export_stock_csv():
     import io, csv
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Barkod', 'Urun Adi', 'Kategori', 'Alis Fiyati', 'Satis Fiyati', 'Stok', 'Min Stok', 'Birim'])
+    writer.writerow(['Barkod', 'Urun Adi', 'Kategori', 'Alis Fiyati', 'Satis Fiyati', 'Stok', 'Min Stok', 'Birim', 'Stoksuz'])
     for p in products:
         writer.writerow([
             p.barcode, p.name,
             p.category.name if p.category else '',
             str(p.purchase_price or 0), str(p.sale_price or 0),
-            str(p.stock_qty or 0), str(p.min_stock_qty or 0), p.unit or ''
+            str(p.stock_qty or 0), str(p.min_stock_qty or 0), p.unit or '',
+            'Evet' if p.is_stockless else ''
         ])
     csv_output = output.getvalue()
     return Response(

@@ -47,6 +47,7 @@ class Product(db.Model):
     wholesale_min_qty = db.Column(db.Numeric(10,2), default=0)
     is_set = db.Column(db.Boolean, default=False)
     is_quick_product = db.Column(db.Boolean, default=False)
+    is_stockless = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

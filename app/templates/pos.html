@@ -43,7 +43,7 @@
                             data-id="{{ p.id }}" data-barcode="{{ p.barcode }}"
                             data-name="{{ p.name }}" data-price="{{ p.sale_price }}"
                             data-cat="{{ p.category_id }}">
-                        {{ p.name[:20] }}<br><small>{{ p.sale_price }} ₺</small>
+                        {{ p.name[:20] }}<br><small>{{ p.sale_price }} ₺{% if p.is_stockless %} ♾{% endif %}</small>
                     </button>
                     {% endfor %}
                     </div>
@@ -195,15 +195,27 @@
                 <h5><i class="bi bi-question-circle text-warning"></i> Barkod Tanınamadı</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center" id="unknownBarcodeBody">
-                <p class="mb-1">Bu barkod sistemde kayıtlı değil.</p>
-                <p class="fw-bold mb-2" id="unknownBarcodeDisplay"></p>
-                <p class="text-muted small">Yeni ürün eklemek ister misiniz?</p>
+            <div class="modal-body" id="unknownBarcodeBody">
+                <p class="mb-1 text-center">Bu barkod sistemde kayıtlı değil.</p>
+                <p class="fw-bold mb-2 text-center" id="unknownBarcodeDisplay"></p>
+                <div class="mb-2">
+                    <label class="form-label">Ürün Adı</label>
+                    <input type="text" id="unknownProductName" class="form-control" placeholder="Ürün adı (boş = barkod)" autocomplete="off">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Satış Fiyatı (₺)</label>
+                    <input type="number" id="unknownProductPrice" class="form-control" placeholder="0.00" step="0.25" min="0.25">
+                </div>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="unknownProductStockless">
+                    <label class="form-check-label" for="unknownProductStockless">Stok takibi yapılmasın</label>
+                </div>
+                <div id="unknownProductError" class="text-danger small"></div>
             </div>
             <div class="modal-footer justify-content-center">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button class="btn btn-primary" id="unknownBarcodeAddBtn" onclick="addUnknownProduct()">
-                    <i class="bi bi-plus-circle"></i> Ürün Ekle
+                <button class="btn btn-primary" id="unknownBarcodeSaveBtn" onclick="saveUnknownProduct()">
+                    <i class="bi bi-save"></i> Kaydet ve Sepete Ekle
                 </button>
             </div>
         </div>
@@ -234,6 +246,10 @@ function searchProduct() {
                 if (barcode.length > 0) {
                     document.getElementById('unknownBarcodeDisplay').textContent = 'Barkod: ' + barcode;
                     document.getElementById('unknownBarcodeAddBtn').dataset.barcode = barcode;
+                    document.getElementById('unknownProductName').value = '';
+                    document.getElementById('unknownProductPrice').value = '';
+                    document.getElementById('unknownProductStockless').checked = false;
+                    document.getElementById('unknownProductError').textContent = '';
                     const modal = new bootstrap.Modal(document.getElementById('unknownBarcodeModal'));
                     modal.show();
                 }
@@ -249,7 +265,7 @@ function searchProduct() {
             container.innerHTML = products.map((p, i) =>
                 `<button class="list-group-item list-group-item-action py-1" onclick="selectProduct(${i})" data-id="${p.id}">
                     <strong>${esc(p.name)}</strong> <span class="badge bg-primary">${p.price} ₺</span>
-                    <small class="text-muted">Stok: ${esc(p.stock)}</small>
+                    ${p.stockless ? '<span class="badge bg-info">Stoksuz</span>' : `<small class="text-muted">Stok: ${esc(p.stock)}</small>`}
                     <small class="text-muted">(${esc(p.barcode)})</small>
                 </button>`
             ).join('');
@@ -268,11 +284,39 @@ function selectProduct(idx) {
     }
 }
 
-function addUnknownProduct() {
+function saveUnknownProduct() {
     const barcode = document.getElementById('unknownBarcodeAddBtn').dataset.barcode;
-    const modal = bootstrap.Modal.getInstance(document.getElementById('unknownBarcodeModal'));
-    modal.hide();
-    window.location.href = '/stock/?barcode=' + encodeURIComponent(barcode);
+    const name = document.getElementById('unknownProductName').value.trim();
+    const price = parseFloat(document.getElementById('unknownProductPrice').value);
+    const stockless = document.getElementById('unknownProductStockless').checked;
+    const errEl = document.getElementById('unknownProductError');
+
+    if (!price || price <= 0) { errEl.textContent = 'Geçerli bir fiyat girin'; return; }
+    errEl.textContent = '';
+
+    const btn = document.getElementById('unknownBarcodeSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch('/pos/add-product', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({barcode: barcode, name: name, price: price, stockless: stockless})
+    })
+    .then(r => r.json())
+    .then(result => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-save"></i> Kaydet ve Sepete Ekle';
+        if (result.error) {
+            errEl.textContent = result.error;
+            return;
+        }
+        addToCart({id: result.id, barcode: result.barcode, name: result.name, price: result.price, stockless: result.stockless});
+        document.getElementById('barcodeInput').value = '';
+        document.getElementById('barcodeInput').focus();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('unknownBarcodeModal'));
+        modal.hide();
+    });
 }
 
 function showError(msg) {

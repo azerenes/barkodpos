@@ -45,14 +45,14 @@
             </thead>
             <tbody>
                 {% for p in products %}
-                <tr class="{{ 'table-warning' if p.stock_qty <= p.min_stock_qty }}">
+                <tr class="{{ 'table-warning' if p.stock_qty <= p.min_stock_qty and not p.is_stockless }}">
                     <td>{{ p.barcode }}</td>
                     <td>{{ p.name }}</td>
                     <td>{{ p.category.name if p.category else '-' }}</td>
                     <td>{{ p.purchase_price }} ₺</td>
                     <td>{{ p.sale_price }} ₺</td>
-                    <td class="{{ 'text-danger fw-bold' if p.stock_qty <= p.min_stock_qty }}">
-                        {{ p.stock_qty }}
+                    <td class="{{ 'text-danger fw-bold' if p.stock_qty <= p.min_stock_qty and not p.is_stockless }}">
+                        {% if p.is_stockless %}<span class="badge bg-info">Stoksuz</span>{% else %}{{ p.stock_qty }}{% endif %}
                     </td>
                     <td>{{ p.min_stock_qty }}</td>
                     <td>{{ p.unit }}</td>
@@ -103,16 +103,21 @@
                     <div class="mb-2"><label>Barkod <span class="text-danger">*</span></label><input type="text" name="barcode" class="form-control" required></div>
                     <div class="mb-2"><label>Ürün Adı <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required></div>
                     <div class="mb-2">
-                        <label>Kategori</label>
-                        <div class="input-group">
-                            <select name="category_id" class="form-select" id="addCategorySelect">
-                                <option value="">- Seçin -</option>
-                                {% for cat in categories %}
-                                <option value="{{ cat.id }}">{{ cat.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-outline-primary" type="button" onclick="showAddCategory()" title="Yeni Kategori Ekle"><i class="bi bi-plus-lg"></i></button>
-                        </div>
+                        <label>Birim</label>
+                        <select name="unit" class="form-select">
+                            <option value="Adet">Adet</option>
+                            <option value="Düzine">Düzine</option>
+                            <option value="Kg">Kg</option>
+                            <option value="Lt">Lt</option>
+                            <option value="Paket">Paket</option>
+                            <option value="Koli">Koli</option>
+                            <option value="Set">Set</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" name="is_stockless" id="addStockless">
+                        <label class="form-check-label" for="addStockless">Stok takibi yapılmasın</label>
+                    </div>
                         <div id="addCategoryInline" style="display:none" class="mt-1 input-group">
                             <input type="text" id="newCategoryName" class="form-control" placeholder="Kategori adı">
                             <button class="btn btn-success" type="button" onclick="saveCategory()"><i class="bi bi-check"></i></button>
@@ -221,6 +226,10 @@
                             <option value="{{ s.id }}" {{ 'selected' if p.supplier_id == s.id }}>{{ s.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" name="is_stockless" id="editStockless{{ p.id }}" {{ 'checked' if p.is_stockless }}>
+                        <label class="form-check-label" for="editStockless{{ p.id }}">Stok takibi yapılmasın</label>
                     </div>
                 </div>
                 <div class="modal-footer">
