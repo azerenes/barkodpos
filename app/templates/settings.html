@@ -221,6 +221,7 @@
                     </div>
                     <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-save"></i> Kaydet</button>
                 </form>
+                <div id="telegramBotStatus" class="mb-2 small"></div>
                 <button class="btn btn-outline-info w-100 mt-2" onclick="testTelegram()">
                     <i class="bi bi-plug"></i> Bot Bağlantısını Test Et
                 </button>
@@ -292,6 +293,29 @@ function testTelegram() {
         btn.innerHTML = '<i class="bi bi-plug"></i> Bot Bağlantısını Test Et';
     });
 }
+function checkTelegramStatus() {
+    var el = document.getElementById('telegramBotStatus');
+    fetch('{{ url_for("settings.telegram_status") }}')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.running) {
+                el.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Bot aktif ve çalışıyor</span>';
+            } else if (d.status === 'token_yok') {
+                el.innerHTML = '<span class="text-muted"><i class="bi bi-dash-circle"></i> Bot token girilmedi</span>';
+            } else if (d.status === 'chat_id_yok') {
+                el.innerHTML = '<span class="text-muted"><i class="bi bi-dash-circle"></i> Chat ID girilmedi</span>';
+            } else {
+                el.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Bot çalışmıyor' +
+                    (d.last_error ? ': ' + d.last_error : '') + '</span>';
+            }
+        })
+        .catch(function() {
+            el.innerHTML = '<span class="text-muted">Durum alınamadı</span>';
+        });
+}
+checkTelegramStatus();
+setInterval(checkTelegramStatus, 15000);
+
 function checkUpdate() {
     var statusEl = document.getElementById('updateStatus');
     var actionsEl = document.getElementById('updateActions');

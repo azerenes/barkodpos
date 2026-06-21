@@ -198,6 +198,16 @@ def test_telegram():
     except Exception as e:
         return jsonify({'error': f'Bağlantı hatası: {str(e)}'}), 400
 
+@settings_bp.route('/telegram-status')
+@login_required
+def telegram_status():
+    if not is_admin():
+        return jsonify({'error': 'Yetkiniz yok'}), 403
+    from app import _bot_instance
+    if _bot_instance is None:
+        return jsonify({'running': False, 'status': 'baslatilmadi'})
+    return jsonify(_bot_instance.status)
+
 @settings_bp.route('/test-pos', methods=['POST'])
 @login_required
 def test_pos():
