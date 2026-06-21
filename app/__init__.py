@@ -100,6 +100,14 @@ def create_app():
         db.session.commit()
 
         import os, shutil
+        # Migrate existing DB from instance/ to APPDATA/BarkodPOS/data/
+        from config import get_data_dir
+        old_db = os.path.join(app.instance_path, 'barkodpos.db')
+        new_db = os.path.join(get_data_dir(), 'barkodpos.db')
+        if os.path.exists(old_db) and not os.path.exists(new_db):
+            os.makedirs(os.path.dirname(new_db), exist_ok=True)
+            shutil.copy2(old_db, new_db)
+
         # migrate existing DB — add columns if missing
         with db.engine.connect() as conn:
             for stmt in [
@@ -117,9 +125,9 @@ def create_app():
                 except Exception:
                     pass
         from datetime import date
-        backup_dir = os.path.join(app.instance_path, 'backups')
+        backup_dir = os.path.join(get_data_dir(), 'backups')
         os.makedirs(backup_dir, exist_ok=True)
-        db_path = os.path.join(app.instance_path, 'barkodpos.db')
+        db_path = os.path.join(get_data_dir(), 'barkodpos.db')
         if os.path.exists(db_path):
             today = date.today().isoformat()
             backup_file = os.path.join(backup_dir, f'barkodpos_{today}.db')

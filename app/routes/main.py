@@ -62,7 +62,8 @@ def diagnostic_info():
         'time': datetime.utcnow().isoformat(),
     }
     try:
-        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'instance', 'barkodpos.db')
+        from config import get_data_dir
+        db_path = os.path.join(get_data_dir(), 'barkodpos.db')
         if os.path.exists(db_path):
             info['db_size_mb'] = round(os.path.getsize(db_path) / (1024*1024), 2)
             info['db_mtime'] = datetime.fromtimestamp(os.path.getmtime(db_path)).isoformat()

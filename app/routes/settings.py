@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Setting
 from app import db
+from config import get_data_dir
 import shutil, os, sys, subprocess
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -25,7 +26,7 @@ def index():
         return redirect(url_for('main.dashboard'))
     from app.update_helper import CURRENT_VERSION, GITHUB_OWNER, GITHUB_REPO
     import glob
-    backup_dir = current_app.instance_path
+    backup_dir = get_data_dir()
     backups = sorted([f for f in os.listdir(backup_dir) if f.startswith('backup_') and f.endswith('.db')], reverse=True)
     return render_template('settings.html', backups=backups,
         company_name=get_setting('company_name', 'İşletmem'),
@@ -97,8 +98,8 @@ def backup():
         return redirect(url_for('main.dashboard'))
     try:
         import sqlite3, io, datetime
-        db_path = os.path.join(current_app.instance_path, 'barkodpos.db')
-        backup_path = os.path.join(current_app.instance_path, f'backup_{datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db')
+        db_path = os.path.join(get_data_dir(), 'barkodpos.db')
+        backup_path = os.path.join(get_data_dir(), f'backup_{datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db')
         if os.path.exists(db_path):
             shutil.copy2(db_path, backup_path)
             flash(f'Yedekleme tamam: backup_{datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.db', 'success')
@@ -119,15 +120,15 @@ def restore():
     if not backup_file or '..' in backup_file:
         flash('Geçersiz dosya', 'error')
         return redirect(url_for('settings.index'))
-    backup_path = os.path.join(current_app.instance_path, backup_file)
+    backup_path = os.path.join(get_data_dir(), backup_file)
     if not os.path.exists(backup_path):
         flash('Dosya bulunamadı', 'error')
         return redirect(url_for('settings.index'))
     try:
-        db_path = os.path.join(current_app.instance_path, 'barkodpos.db')
+        db_path = os.path.join(get_data_dir(), 'barkodpos.db')
         if os.path.exists(db_path):
             ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-            shutil.copy2(db_path, os.path.join(current_app.instance_path, f'pre_restore_{ts}.db'))
+            shutil.copy2(db_path, os.path.join(get_data_dir(), f'pre_restore_{ts}.db'))
         shutil.copy2(backup_path, db_path)
         flash(f'Veritabanı geri yüklendi: {backup_file}. Uygulama yeniden başlatıldığında etkin olur.', 'success')
     except Exception as e:
