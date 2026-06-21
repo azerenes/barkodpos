@@ -52,6 +52,8 @@ def index():
         currency_usd=get_setting('currency_usd', '0'),
         currency_eur=get_setting('currency_eur', '0'),
         auto_add_on_scan=get_setting('auto_add_on_scan', '0'),
+        telegram_bot_token=get_setting('telegram_bot_token', ''),
+        telegram_allowed_chat_ids=get_setting('telegram_allowed_chat_ids', ''),
         github_repo=f'{GITHUB_OWNER}/{GITHUB_REPO}',
         current_version=CURRENT_VERSION)
 
@@ -85,6 +87,8 @@ def save():
         set_setting('currency_usd', request.form.get('currency_usd', '0'))
         set_setting('currency_eur', request.form.get('currency_eur', '0'))
         set_setting('auto_add_on_scan', request.form.get('auto_add_on_scan', '0'))
+        set_setting('telegram_bot_token', request.form.get('telegram_bot_token', ''))
+        set_setting('telegram_allowed_chat_ids', request.form.get('telegram_allowed_chat_ids', ''))
         db.session.commit()
         flash('Ayarlar kaydedildi', 'success')
     except Exception as e:
@@ -172,6 +176,27 @@ def do_update():
         'success': True,
         'message': 'Güncelleme indirildi. Uygulama yeniden başlayacak.'
     })
+
+@settings_bp.route('/test-telegram', methods=['POST'])
+@login_required
+def test_telegram():
+    if not is_admin():
+        return jsonify({'error': 'Yetkiniz yok'}), 403
+    token = request.form.get('token') or request.json.get('token') if request.is_json else None
+    if not token:
+        token = get_setting('telegram_bot_token', '')
+    if not token:
+        return jsonify({'error': 'Bot token girilmedi'}), 400
+    try:
+        from telegram import Bot
+        import asyncio
+        bot = Bot(token)
+        loop = asyncio.new_event_loop()
+        me = loop.run_until_complete(bot.get_me())
+        loop.close()
+        return jsonify({'success': True, 'message': f'Bot aktif: @{me.username}'})
+    except Exception as e:
+        return jsonify({'error': f'Bağlantı hatası: {str(e)}'}), 400
 
 @settings_bp.route('/test-pos', methods=['POST'])
 @login_required

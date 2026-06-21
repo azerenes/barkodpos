@@ -177,4 +177,21 @@ def create_app():
                 except (ValueError, IndexError):
                     pass
 
+    start_telegram_bot(app)
     return app
+
+_bot_instance = None
+
+def start_telegram_bot(app):
+    global _bot_instance
+    if _bot_instance is not None:
+        _bot_instance.stop()
+    from app.telegram_bot import BarkodPOSBot
+    _bot_instance = BarkodPOSBot(app)
+    _bot_instance.start()
+
+def stop_telegram_bot():
+    global _bot_instance
+    if _bot_instance is not None:
+        _bot_instance.stop()
+        _bot_instance = None
