@@ -90,6 +90,8 @@ def save():
         set_setting('telegram_bot_token', request.form.get('telegram_bot_token', ''))
         set_setting('telegram_allowed_chat_ids', request.form.get('telegram_allowed_chat_ids', ''))
         db.session.commit()
+        from app import start_telegram_bot
+        start_telegram_bot(current_app._get_current_object())
         flash('Ayarlar kaydedildi', 'success')
     except Exception as e:
         db.session.rollback()
