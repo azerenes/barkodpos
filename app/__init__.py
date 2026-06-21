@@ -100,13 +100,25 @@ def create_app():
         db.session.commit()
 
         import os, shutil
-        # Migrate existing DB from instance/ to APPDATA/BarkodPOS/data/
+        # Migrate existing DB from any old location to APPDATA/BarkodPOS/data/
         from config import get_data_dir
-        old_db = os.path.join(app.instance_path, 'barkodpos.db')
         new_db = os.path.join(get_data_dir(), 'barkodpos.db')
-        if os.path.exists(old_db) and not os.path.exists(new_db):
-            os.makedirs(os.path.dirname(new_db), exist_ok=True)
-            shutil.copy2(old_db, new_db)
+
+        if not os.path.exists(new_db):
+            candidates = [
+                os.path.join(app.instance_path, 'barkodpos.db'),
+                os.path.join(os.path.dirname(app.instance_path.rstrip(os.sep)), 'instance', 'barkodpos.db'),
+                os.path.join(os.getcwd(), 'instance', 'barkodpos.db'),
+            ]
+            import sys as _sys
+            if getattr(_sys, 'frozen', False):
+                exe_dir = os.path.dirname(_sys.executable)
+                candidates.append(os.path.join(exe_dir, 'instance', 'barkodpos.db'))
+            for old_db in candidates:
+                if os.path.exists(old_db):
+                    os.makedirs(os.path.dirname(new_db), exist_ok=True)
+                    shutil.copy2(old_db, new_db)
+                    break
 
         # migrate existing DB — add columns if missing
         with db.engine.connect() as conn:

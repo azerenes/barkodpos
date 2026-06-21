@@ -44,14 +44,27 @@ def quick_sale():
     from app import db
     try:
         data = request.get_json()
+        barcode_input = (data.get('barcode', '') or '').strip()
         name = (data.get('name', '') or '').strip()
         price = round(float(data.get('price', 0)), 2)
-        if not name:
-            return jsonify({'error': 'Ürün adı gerekli'}), 400
+        stockless = bool(data.get('stockless', False))
+
+        if not name and not barcode_input:
+            return jsonify({'error': 'Ürün adı veya barkod gerekli'}), 400
         if price <= 0:
             return jsonify({'error': 'Geçersiz fiyat'}), 400
 
         from app.models import Product, Category
+
+        if barcode_input:
+            existing = Product.query.filter_by(barcode=barcode_input).first()
+            if existing:
+                return jsonify({
+                    'id': existing.id, 'barcode': existing.barcode,
+                    'name': existing.name, 'price': round(float(existing.sale_price), 2),
+                    'stock': round(float(existing.stock_qty), 2), 'unit': existing.unit or 'Adet',
+                    'stockless': existing.is_stockless
+                })
 
         tax_setting = 0
         from app.routes.settings import get_setting
@@ -63,18 +76,25 @@ def quick_sale():
         cat = Category.query.order_by(Category.id).first()
         cat_id = cat.id if cat else 1
 
-        barcode = f"QS-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+        if not barcode_input:
+            barcode = f"QS-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+        else:
+            barcode = barcode_input
+
+        if not name:
+            name = f"* {barcode}"
 
         product = Product(
             barcode=barcode,
-            name=f"* {name}",
+            name=name,
             sale_price=price,
             purchase_price=price,
             stock_qty=0,
             category_id=cat_id,
             tax_rate=tax_setting,
             is_active=True,
-            unit='Adet'
+            unit='Adet',
+            is_stockless=stockless
         )
         db.session.add(product)
         db.session.commit()
@@ -82,7 +102,7 @@ def quick_sale():
         return jsonify({
             'id': product.id, 'barcode': product.barcode,
             'name': product.name, 'price': round(float(product.sale_price), 2),
-            'stock': 0, 'unit': 'Adet'
+            'stock': 0, 'unit': 'Adet', 'stockless': stockless
         })
     except Exception as e:
         db.session.rollback()

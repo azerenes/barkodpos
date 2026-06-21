@@ -169,12 +169,20 @@
             </div>
             <div class="modal-body">
                 <div class="mb-2">
+                    <label class="form-label">Barkod <small class="text-muted">(opsiyonel, boş olursa otomatik üretilir)</small></label>
+                    <input type="text" id="quickSaleBarcode" class="form-control" placeholder="Barkod okutun veya boş bırakın" autocomplete="off">
+                </div>
+                <div class="mb-2">
                     <label class="form-label">Ürün Adı</label>
                     <input type="text" id="quickSaleName" class="form-control" placeholder="Örn: Çay bardağı" autocomplete="off">
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Satış Fiyatı (₺)</label>
                     <input type="number" id="quickSalePrice" class="form-control" placeholder="0.00" step="0.25" min="0.25">
+                </div>
+                <div class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="quickSaleStockless">
+                    <label class="form-check-label" for="quickSaleStockless">Stok takibi yapılmasın</label>
                 </div>
                 <div id="quickSaleError" class="text-danger small"></div>
             </div>
@@ -493,10 +501,12 @@ function clearCart() {
 }
 
 function doQuickSale() {
+    const barcode = document.getElementById('quickSaleBarcode').value.trim();
     const name = document.getElementById('quickSaleName').value.trim();
     const price = parseFloat(document.getElementById('quickSalePrice').value);
+    const stockless = document.getElementById('quickSaleStockless').checked;
     const errEl = document.getElementById('quickSaleError');
-    if (!name) { errEl.textContent = 'Ürün adı girin'; return; }
+    if (!name && !barcode) { errEl.textContent = 'Ürün adı veya barkod girin'; return; }
     if (!price || price <= 0) { errEl.textContent = 'Geçerli bir fiyat girin'; return; }
     errEl.textContent = '';
 
@@ -506,7 +516,7 @@ function doQuickSale() {
     fetch('/pos/quick-sale', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name: name, price: price})
+        body: JSON.stringify({barcode: barcode, name: name, price: price, stockless: stockless})
     })
     .then(r => r.json())
     .then(result => {
@@ -516,9 +526,11 @@ function doQuickSale() {
             document.getElementById('doQuickSale').innerHTML = '<i class="bi bi-cart-plus"></i> Sepete Ekle';
             return;
         }
-        addToCart({id: result.id, barcode: result.barcode, name: result.name, price: result.price});
+        addToCart({id: result.id, barcode: result.barcode, name: result.name, price: result.price, stockless: result.stockless});
+        document.getElementById('quickSaleBarcode').value = '';
         document.getElementById('quickSaleName').value = '';
         document.getElementById('quickSalePrice').value = '';
+        document.getElementById('quickSaleStockless').checked = false;
         document.getElementById('barcodeInput').focus();
         const modal = bootstrap.Modal.getInstance(document.getElementById('quickSaleModal'));
         modal.hide();
