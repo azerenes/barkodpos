@@ -263,13 +263,6 @@ function searchProduct() {
                 }
                 return;
             }
-            if (products.length === 1) {
-                addToCart(products[0]);
-                document.getElementById('barcodeInput').value = '';
-                container.style.display = 'none';
-                document.getElementById('barcodeInput').focus();
-                return;
-            }
             container.innerHTML = products.map((p, i) =>
                 `<button class="list-group-item list-group-item-action py-1" onclick="selectProduct(${i})" data-id="${p.id}">
                     <strong>${esc(p.name)}</strong> <span class="badge bg-primary">${p.price} ₺</span>
