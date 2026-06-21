@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.auth_helper import login_required, get_user_id, get_branch_id
-from app.models import CashRegister, Sale, Expense
+from app.models import CashRegister
 from app import db
-from datetime import datetime, date
+from datetime import datetime
 
 cashreg_bp = Blueprint('cashreg', __name__, url_prefix='/cash-register')
 
@@ -44,36 +44,21 @@ def close_register():
         return redirect(url_for('cashreg.index'))
     try:
         actual = round(float(request.form.get('closing_balance', 0)), 2)
-        today = date.today()
-        sales = Sale.query.filter(
-            Sale.branch_id == get_branch_id(),
-            Sale.status == 'completed',
-            db.func.date(Sale.created_at) == today
-        ).all()
-        cash_total = sum(float(s.grand_total) for s in sales if s.payment_method == 'cash')
-        card_total = sum(float(s.grand_total) for s in sales if s.payment_method == 'credit_card')
-
-        expenses = Expense.query.filter(
-            Expense.branch_id == get_branch_id(),
-            db.func.date(Expense.expense_date) == today
-        ).all()
-        expense_total = sum(float(e.amount) for e in expenses)
-
-        expected = round(float(reg.opening_balance) + cash_total - expense_total, 2)
-        diff = round(actual - expected, 2)
+        opening = round(float(reg.opening_balance), 2)
+        diff = round(actual - opening, 2)
 
         reg.closing_balance = actual
-        reg.expected_balance = expected
         reg.difference = diff
         reg.status = 'closed'
         reg.closed_at = datetime.utcnow()
-        reg.notes = (reg.notes or '') + f' | Nakit: {cash_total:.2f} Kart: {card_total:.2f} Gider: {expense_total:.2f}'
         db.session.commit()
 
-        if diff != 0:
-            flash(f'Kasa kapandı. Beklenen: {expected:.2f} ₺, Gerçek: {actual:.2f} ₺, Fark: {diff:.2f} ₺', 'warning')
+        if diff > 0:
+            flash(f'Kasa kapandı. Açılış: {opening:.2f} ₺ → Kapanış: {actual:.2f} ₺, Fark: +{diff:.2f} ₺', 'success')
+        elif diff < 0:
+            flash(f'Kasa kapandı. Açılış: {opening:.2f} ₺ → Kapanış: {actual:.2f} ₺, Fark: {diff:.2f} ₺', 'warning')
         else:
-            flash(f'Kasa kapandı. Tutar: {actual:.2f} ₺ (Tam)', 'success')
+            flash(f'Kasa kapandı. Açılış: {opening:.2f} ₺ → Kapanış: {actual:.2f} ₺ (Fark Yok)', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Hata: {str(e)}', 'error')

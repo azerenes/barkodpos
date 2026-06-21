@@ -204,28 +204,23 @@
         </div>
 
         <div class="card mt-3">
-            <div class="card-header"><i class="bi bi-telegram"></i> Telegram Bot</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('settings.save') }}">
-                    <div class="mb-2">
-                        <label>Bot Token</label>
-                        <input type="password" name="telegram_bot_token" class="form-control" value="{{ telegram_bot_token }}" placeholder="123456:ABC-DEF...">
-                        <div class="form-text small text-muted"><a href="https://t.me/BotFather" target="_blank">@BotFather</a> ile token alın</div>
-                    </div>
-                    <div class="mb-2">
-                        <label>Yetkili Chat ID'leri (virgülle ayırın)</label>
-                        <input type="text" name="telegram_allowed_chat_ids" class="form-control" value="{{ telegram_allowed_chat_ids }}" placeholder="123456789, -987654321">
-                        <div class="form-text small text-muted">
-                            ID'yi öğrenmek için <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> yazın
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-save"></i> Kaydet</button>
-                </form>
-                <div id="telegramBotStatus" class="mb-2 small"></div>
-                <button class="btn btn-outline-info w-100 mt-2" onclick="testTelegram()">
-                    <i class="bi bi-plug"></i> Bot Bağlantısını Test Et
-                </button>
-                <div id="telegramTestResult" class="mt-2 small"></div>
+            <div class="card-header"><i class="bi bi-brush"></i> Logo</div>
+            <div class="card-body text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" style="width:80px;height:80px;margin:0 auto 12px;">
+                    <rect x="8" y="8" width="104" height="104" rx="18" stroke="#1A1A1A" stroke-width="7"/>
+                    <line x1="35" y1="40" x2="85" y2="40" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M35 40 L60 82" stroke="#1A1A1A" stroke-width="4.5" stroke-linecap="round"/>
+                    <path d="M85 40 L60 82" stroke="#1A1A1A" stroke-width="4.5" stroke-linecap="round"/>
+                    <circle cx="35" cy="40" r="9" fill="#1A1A1A"/>
+                    <circle cx="35" cy="40" r="3.5" fill="white" opacity="0.25"/>
+                    <circle cx="85" cy="40" r="9" fill="#1A1A1A"/>
+                    <circle cx="85" cy="40" r="3.5" fill="white" opacity="0.25"/>
+                    <circle cx="60" cy="82" r="9" fill="#DC2626"/>
+                    <circle cx="60" cy="82" r="3.5" fill="white" opacity="0.25"/>
+                </svg>
+                <div style="font-size:32px;font-weight:700;letter-spacing:0.06em;line-height:1.2;">EVC<span style="position:relative;display:inline-block;width:.4em;text-align:center;">I<span style="position:absolute;width:.15em;height:.15em;background:#DC2626;border-radius:50%;top:-.22em;left:50%;transform:translateX(-50%);"></span></span></div>
+                <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#6B6B6B;margin-top:4px;">Yazılım · Elektrik · Otomasyon</div>
+                <div class="small text-muted mt-2">Kaynak: <code>C:\Users\IamRa\Downloads\evci.zip</code></div>
             </div>
         </div>
 
@@ -264,58 +259,6 @@
 </div>
 
 <script>
-function testTelegram() {
-    var btn = document.querySelector('button[onclick="testTelegram()"]');
-    var res = document.getElementById('telegramTestResult');
-    var token = document.querySelector('input[name="telegram_bot_token"]').value.trim();
-    if (!token) { res.innerHTML = '<span class="text-warning">Token girin</span>'; return; }
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Test ediliyor...';
-    res.innerHTML = '';
-    fetch('{{ url_for("settings.test_telegram") }}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({token: token})
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.success) {
-            res.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> ' + d.message + '</span>';
-        } else {
-            res.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> ' + (d.error || 'Hata') + '</span>';
-        }
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-plug"></i> Bot BağlantÄ±sÄ±nÄ± Test Et';
-    })
-    .catch(function() {
-        res.innerHTML = '<span class="text-danger">Test hatası</span>';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-plug"></i> Bot Bağlantısını Test Et';
-    });
-}
-function checkTelegramStatus() {
-    var el = document.getElementById('telegramBotStatus');
-    fetch('{{ url_for("settings.telegram_status") }}')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            if (d.running) {
-                el.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Bot aktif ve çalışıyor</span>';
-            } else if (d.status === 'token_yok') {
-                el.innerHTML = '<span class="text-muted"><i class="bi bi-dash-circle"></i> Bot token girilmedi</span>';
-            } else if (d.status === 'chat_id_yok') {
-                el.innerHTML = '<span class="text-muted"><i class="bi bi-dash-circle"></i> Chat ID girilmedi</span>';
-            } else {
-                el.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Bot çalışmıyor' +
-                    (d.last_error ? ': ' + d.last_error : '') + '</span>';
-            }
-        })
-        .catch(function() {
-            el.innerHTML = '<span class="text-muted">Durum alınamadı</span>';
-        });
-}
-checkTelegramStatus();
-setInterval(checkTelegramStatus, 15000);
-
 function checkUpdate() {
     var statusEl = document.getElementById('updateStatus');
     var actionsEl = document.getElementById('updateActions');

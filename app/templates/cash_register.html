@@ -20,13 +20,12 @@
     <div class="card-header">Kasa Geçmişi</div>
     <div class="table-responsive">
         <table class="table table-sm mb-0">
-            <thead><tr><th>Tarih</th><th>Açılış</th><th>Beklenen</th><th>Kapanış</th><th>Fark</th><th>Kullanıcı</th><th>Durum</th></tr></thead>
+            <thead><tr><th>Tarih</th><th>Açılış</th><th>Kapanış</th><th>Fark</th><th>Kullanıcı</th><th>Durum</th></tr></thead>
             <tbody>
                 {% for r in registers %}
                 <tr>
                     <td><small>{{ r.opened_at.strftime('%d.%m.%Y') }}</small></td>
                     <td>{{ r.opening_balance }} ₺</td>
-                    <td>{{ r.expected_balance }} ₺</td>
                     <td>{{ r.closing_balance }} ₺</td>
                     <td class="{% if r.difference > 0 %}text-success{% elif r.difference < 0 %}text-danger{% endif %} fw-bold">
                         {{ r.difference }} ₺
@@ -41,7 +40,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="text-center text-muted py-3">Kayıt yok</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-3">Kayıt yok</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -70,7 +69,7 @@
                 <div class="modal-header"><h5>Kasa Kapat</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <div class="mb-2"><label>Kasa Sayımı (Fiili Kasa Bakiyesi)</label><input type="number" name="closing_balance" class="form-control" step="0.01" min="0" required></div>
-                    <div class="small text-muted">Kapatıldığında bugünkü satışlar otomatik hesaplanır ve beklenen bakiye ile karşılaştırılır.</div>
+                    <div class="small text-muted">Kapanış bakiyesi ile açılış bakiyesi arasındaki fark otomatik hesaplanır.</div>
                 </div>
                 <div class="modal-footer"><button type="submit" class="btn btn-warning">Kapat ve Hesapla</button></div>
             </form>

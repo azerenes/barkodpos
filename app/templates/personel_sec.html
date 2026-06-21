@@ -3,21 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarkodPOS - Personel Seçimi</title>
+    <title>BarkodPOS - Giriş</title>
     <link href="{{ url_for('static', filename='lib/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='lib/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
         body { background: #1a1a2e; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .secim-card { background: #fff; border-radius: 16px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .secim-card h2 { text-align: center; color: #1a1a2e; margin-bottom: 8px; }
-        .secim-card p { text-align: center; color: #666; margin-bottom: 24px; }
+        .secim-card { background: #fff; border-radius: 16px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align:center; }
     </style>
 </head>
 <body>
     <div class="secim-card">
-        <h2><i class="bi bi-upc-scan"></i> BarkodPOS</h2>
-        <p>Personel seçimi yapın</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" style="width:72px;height:72px;margin-bottom:12px;">
+            <rect x="8" y="8" width="104" height="104" rx="18" stroke="#1A1A1A" stroke-width="7"/>
+            <line x1="35" y1="40" x2="85" y2="40" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+            <path d="M35 40 L60 82" stroke="#1A1A1A" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M85 40 L60 82" stroke="#1A1A1A" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="35" cy="40" r="9" fill="#1A1A1A"/>
+            <circle cx="35" cy="40" r="3.5" fill="white" opacity="0.25"/>
+            <circle cx="85" cy="40" r="9" fill="#1A1A1A"/>
+            <circle cx="85" cy="40" r="3.5" fill="white" opacity="0.25"/>
+            <circle cx="60" cy="82" r="9" fill="#DC2626"/>
+            <circle cx="60" cy="82" r="3.5" fill="white" opacity="0.25"/>
+        </svg>
+        <div style="font-size:36px;font-weight:700;letter-spacing:0.06em;line-height:1.2;color:#1A1A1A;margin-bottom:4px;">EVC<span style="position:relative;display:inline-block;width:.4em;text-align:center;">I<span style="position:absolute;width:.15em;height:.15em;background:#DC2626;border-radius:50%;top:-.22em;left:50%;transform:translateX(-50%);"></span></span></div>
+        <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#6B6B6B;margin-bottom:24px;">Yazılım · Elektrik · Otomasyon</div>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         {% for msg in messages %}

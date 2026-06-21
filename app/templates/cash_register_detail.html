@@ -11,7 +11,6 @@
             <tr><td>Kapanış Tarihi</td><td>{{ reg.closed_at.strftime('%d.%m.%Y %H:%M') if reg.closed_at else '-' }}</td></tr>
             <tr><td>Kullanıcı</td><td>{{ reg.user.full_name if reg.user else '-' }}</td></tr>
             <tr><td>Açılış Bakiyesi</td><td>{{ reg.opening_balance }} ₺</td></tr>
-            <tr><td>Beklenen Bakiye</td><td>{{ reg.expected_balance }} ₺</td></tr>
             <tr><td>Kapanış Bakiyesi</td><td>{{ reg.closing_balance }} ₺</td></tr>
             <tr><td>Fark</td><td class="fw-bold {% if reg.difference > 0 %}text-success{% elif reg.difference < 0 %}text-danger{% endif %}">{{ reg.difference }} ₺</td></tr>
             <tr><td>Not</td><td>{{ reg.notes or '-' }}</td></tr>
