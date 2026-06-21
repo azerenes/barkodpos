@@ -34,7 +34,7 @@ class BarkodPOSBot:
         data = json.dumps(params).encode() if params else None
         req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.loads(resp.read())
         except Exception as e:
             self._last_error = str(e)
@@ -204,7 +204,7 @@ class BarkodPOSBot:
                     self._send(chat_id, f'\u274c Hata: {str(e)}')
 
     def _poll(self):
-        params = {'timeout': 30, 'offset': self._offset} if self._offset else {'timeout': 30}
+        params = {'timeout': 10, 'offset': self._offset} if self._offset else {'timeout': 10}
         result = self._api('getUpdates', params)
         if result and result.get('ok'):
             for update in result.get('result', []):
