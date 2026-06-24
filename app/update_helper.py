@@ -17,16 +17,17 @@ def _make_context():
         return ctx
 
 def _fetch_json(url, timeout=15):
+    ctx = _make_context()
+    https_handler = urllib.request.HTTPSHandler(context=ctx)
     proxy_handler = urllib.request.ProxyHandler()
-    proxy_support = urllib.request.build_opener(proxy_handler)
+    proxy_support = urllib.request.build_opener(https_handler, proxy_handler)
     for scheme in ('https', 'http'):
         env_var = f'{scheme}_proxy'.upper()
         val = os.environ.get(env_var) or os.environ.get(env_var.lower())
         if val:
             proxy_handler.proxies[scheme] = val
-    ctx = _make_context()
     req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
-    return json.loads(proxy_support.open(req, context=ctx, timeout=timeout).read())
+    return json.loads(proxy_support.open(req, timeout=timeout).read())
 
 def check_update():
     url = f'https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest'
@@ -73,16 +74,17 @@ def _compare_versions(v1, v2):
     return len(parts1) - len(parts2)
 
 def _download_file(url, dest):
+    ctx = _make_context()
+    https_handler = urllib.request.HTTPSHandler(context=ctx)
     proxy_handler = urllib.request.ProxyHandler()
-    proxy_support = urllib.request.build_opener(proxy_handler)
+    proxy_support = urllib.request.build_opener(https_handler, proxy_handler)
     for scheme in ('https', 'http'):
         env_var = f'{scheme}_proxy'.upper()
         val = os.environ.get(env_var) or os.environ.get(env_var.lower())
         if val:
             proxy_handler.proxies[scheme] = val
-    ctx = _make_context()
     req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
-    with proxy_support.open(req, context=ctx, timeout=120) as resp:
+    with proxy_support.open(req, timeout=120) as resp:
         with open(dest, 'wb') as f:
             while True:
                 chunk = resp.read(8192)
