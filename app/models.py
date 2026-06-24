@@ -6,6 +6,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     full_name = db.Column(db.String(150))
+    password_hash = db.Column(db.String(256), nullable=True)
+    permissions = db.Column(db.String(500), default='')
     role = db.Column(db.String(20), default='employee')
     branch_id = db.Column(db.Integer, db.ForeignKey('branches.id'))
     is_active = db.Column(db.Boolean, default=True)

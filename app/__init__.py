@@ -51,13 +51,15 @@ def create_app():
     @app.context_processor
     def inject_user():
         from flask import session
+        perms_str = session.get('permissions', '') or ''
         return dict(
             current_user_id=session.get('user_id'),
             current_user_name=session.get('user_name', ''),
             current_user_role=session.get('role'),
             current_user_branch_id=session.get('branch_id'),
             current_user_is_admin=session.get('role') == 'admin',
-            current_user_is_authenticated='user_id' in session
+            current_user_is_authenticated='user_id' in session,
+            current_user_permissions=[p.strip() for p in perms_str.split(',') if p.strip()]
         )
 
     @app.template_filter('from_json')
@@ -84,6 +86,47 @@ def create_app():
             conn.execute(sa_text('PRAGMA journal_mode=WAL'))
             conn.execute(sa_text('PRAGMA busy_timeout=5000'))
 
+        import os, shutil
+        # Migrate existing DB from any old location to APPDATA/BarkodPOS/data/
+        from config import get_data_dir
+        new_db = os.path.join(get_data_dir(), 'barkodpos.db')
+
+        if not os.path.exists(new_db):
+            candidates = [
+                os.path.join(app.instance_path, 'barkodpos.db'),
+                os.path.join(os.path.dirname(app.instance_path.rstrip(os.sep)), 'instance', 'barkodpos.db'),
+                os.path.join(os.getcwd(), 'instance', 'barkodpos.db'),
+            ]
+            import sys as _sys
+            if getattr(_sys, 'frozen', False):
+                exe_dir = os.path.dirname(_sys.executable)
+                candidates.append(os.path.join(exe_dir, 'instance', 'barkodpos.db'))
+            for old_db in candidates:
+                if os.path.exists(old_db):
+                    os.makedirs(os.path.dirname(new_db), exist_ok=True)
+                    shutil.copy2(old_db, new_db)
+                    break
+
+        # migrate existing DB — add columns if missing (BEFORE any model queries)
+        with db.engine.connect() as conn:
+            for stmt in [
+                'ALTER TABLE products ADD COLUMN supplier_id INTEGER REFERENCES suppliers(id)',
+                'ALTER TABLE products ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
+                'ALTER TABLE sale_items ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
+                'ALTER TABLE sale_items ADD COLUMN tax_amount NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN wholesale_price NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN wholesale_min_qty NUMERIC(10,2) DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN is_set BOOLEAN DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN is_quick_product BOOLEAN DEFAULT 0',
+                'ALTER TABLE products ADD COLUMN is_stockless BOOLEAN DEFAULT 0',
+                'ALTER TABLE users ADD COLUMN password_hash VARCHAR(256)',
+                "ALTER TABLE users ADD COLUMN permissions VARCHAR(500) DEFAULT ''",
+            ]:
+                try:
+                    conn.execute(sa_text(stmt))
+                except Exception:
+                    pass
+
         from app.models import User, Category
 
         if not User.query.filter_by(username='admin').first():
@@ -106,45 +149,6 @@ def create_app():
                 db.session.add(Category(name=name))
 
         db.session.commit()
-
-        import os, shutil
-        # Migrate existing DB from any old location to APPDATA/BarkodPOS/data/
-        from config import get_data_dir
-        new_db = os.path.join(get_data_dir(), 'barkodpos.db')
-
-        if not os.path.exists(new_db):
-            candidates = [
-                os.path.join(app.instance_path, 'barkodpos.db'),
-                os.path.join(os.path.dirname(app.instance_path.rstrip(os.sep)), 'instance', 'barkodpos.db'),
-                os.path.join(os.getcwd(), 'instance', 'barkodpos.db'),
-            ]
-            import sys as _sys
-            if getattr(_sys, 'frozen', False):
-                exe_dir = os.path.dirname(_sys.executable)
-                candidates.append(os.path.join(exe_dir, 'instance', 'barkodpos.db'))
-            for old_db in candidates:
-                if os.path.exists(old_db):
-                    os.makedirs(os.path.dirname(new_db), exist_ok=True)
-                    shutil.copy2(old_db, new_db)
-                    break
-
-        # migrate existing DB — add columns if missing
-        with db.engine.connect() as conn:
-            for stmt in [
-                'ALTER TABLE products ADD COLUMN supplier_id INTEGER REFERENCES suppliers(id)',
-                'ALTER TABLE products ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
-                'ALTER TABLE sale_items ADD COLUMN tax_rate NUMERIC(5,2) DEFAULT 0',
-                'ALTER TABLE sale_items ADD COLUMN tax_amount NUMERIC(10,2) DEFAULT 0',
-                'ALTER TABLE products ADD COLUMN wholesale_price NUMERIC(10,2) DEFAULT 0',
-                'ALTER TABLE products ADD COLUMN wholesale_min_qty NUMERIC(10,2) DEFAULT 0',
-                'ALTER TABLE products ADD COLUMN is_set BOOLEAN DEFAULT 0',
-                'ALTER TABLE products ADD COLUMN is_quick_product BOOLEAN DEFAULT 0',
-                'ALTER TABLE products ADD COLUMN is_stockless BOOLEAN DEFAULT 0',
-            ]:
-                try:
-                    conn.execute(sa_text(stmt))
-                except Exception:
-                    pass
         from datetime import date, timedelta
         try:
             backup_dir = os.path.join(get_data_dir(), 'backups')

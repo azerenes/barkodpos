@@ -52,6 +52,7 @@ def index():
         currency_usd=get_setting('currency_usd', '0'),
         currency_eur=get_setting('currency_eur', '0'),
         auto_add_on_scan=get_setting('auto_add_on_scan', '0'),
+        password_required=get_setting('password_required', '0'),
         current_version=CURRENT_VERSION)
 
 @settings_bp.route('/save', methods=['POST'])
@@ -84,6 +85,7 @@ def save():
         set_setting('currency_usd', request.form.get('currency_usd', '0'))
         set_setting('currency_eur', request.form.get('currency_eur', '0'))
         set_setting('auto_add_on_scan', request.form.get('auto_add_on_scan', '0'))
+        set_setting('password_required', request.form.get('password_required', '0'))
         db.session.commit()
         flash('Ayarlar kaydedildi', 'success')
     except Exception as e:
@@ -188,3 +190,23 @@ def test_pos():
     ports = list_ports() if ptype == 'serial' else []
     result['available_ports'] = ports
     return jsonify(result)
+
+@settings_bp.route('/set-admin-password', methods=['POST'])
+@login_required
+def set_admin_password():
+    if not is_admin():
+        return jsonify({'error': 'Yetkiniz yok'}), 403
+    from app.auth_helper import hash_password
+    from app.models import User
+    password = request.form.get('password', '')
+    confirm = request.form.get('confirm', '')
+    if not password or len(password) < 4:
+        return jsonify({'error': 'Şifre en az 4 karakter olmalıdır'}), 400
+    if password != confirm:
+        return jsonify({'error': 'Şifreler eşleşmiyor'}), 400
+    user = User.query.get(get_user_id())
+    if not user:
+        return jsonify({'error': 'Kullanıcı bulunamadı'}), 404
+    user.password_hash = hash_password(password)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Yönetici şifresi başarıyla belirlendi'})

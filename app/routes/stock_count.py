@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin
 from app.models import StockCount, StockCountItem, Product, Category, StockMovement
 from app import db
 from datetime import datetime
@@ -8,12 +8,14 @@ stock_count_bp = Blueprint('stock_count', __name__, url_prefix='/stock-count')
 
 @stock_count_bp.route('/')
 @login_required
+@require_permission('stock')
 def index():
     counts = StockCount.query.order_by(StockCount.created_at.desc()).all()
     return render_template('stock_count.html', counts=counts)
 
 @stock_count_bp.route('/new', methods=['POST'])
 @login_required
+@require_permission('stock')
 def new_count():
     data = request.get_json()
     category_id = data.get('category_id')
@@ -41,6 +43,7 @@ def new_count():
 
 @stock_count_bp.route('/<int:id>')
 @login_required
+@require_permission('stock')
 def detail(id):
     count = StockCount.query.get_or_404(id)
     categories = Category.query.order_by(Category.name).all()
@@ -48,6 +51,7 @@ def detail(id):
 
 @stock_count_bp.route('/<int:id>/items')
 @login_required
+@require_permission('stock')
 def items(id):
     count = StockCount.query.get_or_404(id)
     q = request.args.get('q', '').strip()
@@ -73,6 +77,7 @@ def items(id):
 
 @stock_count_bp.route('/<int:id>/update', methods=['POST'])
 @login_required
+@require_permission('stock')
 def update_item(id):
     data = request.get_json()
     item = StockCountItem.query.get(data.get('item_id'))
@@ -91,6 +96,7 @@ def update_item(id):
 
 @stock_count_bp.route('/<int:id>/complete', methods=['POST'])
 @login_required
+@require_permission('stock')
 def complete_count(id):
     count = StockCount.query.get_or_404(id)
     if count.status != 'in_progress':
@@ -116,6 +122,7 @@ def complete_count(id):
 
 @stock_count_bp.route('/<int:id>/apply', methods=['POST'])
 @login_required
+@require_permission('stock')
 def apply_count(id):
     count = StockCount.query.get_or_404(id)
     if count.status != 'completed':

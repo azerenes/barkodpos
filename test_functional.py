@@ -10,6 +10,7 @@ for f in os.listdir(instance):
         os.remove(os.path.join(instance, f))
 
 from app import create_app, db
+from app.update_helper import CURRENT_VERSION
 app = create_app()
 from app.models import Sale, Product, Customer, Supplier, Expense
 
@@ -77,7 +78,7 @@ with app.test_client() as c:
     diag = c.get('/diagnostic/info').get_json()
     for field in ['version', 'github_owner', 'github_repo', 'os', 'user_id', 'user_name', 'is_admin', 'time']:
         test(f'diagnostic.{field}', field in diag)
-    test('diagnostic.version 1.5.1', diag.get('version') == '1.5.1')
+    test(f'diagnostic.version {CURRENT_VERSION}', diag.get('version') == CURRENT_VERSION)
     test('diagnostic.github_owner azerenes', diag.get('github_owner') == 'azerenes')
 
     section('3. Kategori ve Urun Olusturma')

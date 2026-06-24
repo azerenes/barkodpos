@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Expense
 from app import db
 from datetime import datetime
@@ -10,6 +10,7 @@ EXPENSE_CATEGORIES = ['Kira', 'Fatura', 'MaaÅŸ', 'Nakliye', 'Vergi', 'Tamir-BakÄ
 
 @expense_bp.route('/')
 @login_required
+@require_permission('expense')
 def expense_list():
     page = request.args.get('page', 1, type=int)
     per_page = 50
@@ -22,6 +23,7 @@ def expense_list():
 
 @expense_bp.route('/add', methods=['POST'])
 @login_required
+@require_permission('expense')
 def add_expense():
     try:
         amount = float(request.form.get('amount', 0) or 0)
@@ -55,6 +57,7 @@ def add_expense():
 
 @expense_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
+@require_permission('expense')
 def delete_expense(id):
     expense = Expense.query.get_or_404(id)
     try:

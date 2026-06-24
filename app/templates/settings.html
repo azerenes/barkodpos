@@ -75,6 +75,10 @@
                         <input type="checkbox" class="form-check-input" name="auto_add_on_scan" id="autoAddOnScan" value="1" {{ 'checked' if auto_add_on_scan == '1' }}>
                         <label class="form-check-label" for="autoAddOnScan">Barkod okutunca tek sonuç varsa direkt sepete ekle</label>
                     </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" name="password_required" id="passwordRequired" value="1" {{ 'checked' if password_required == '1' }}>
+                        <label class="form-check-label" for="passwordRequired">Şifreli Giriş<span class="text-muted small ms-1">(açınca personel şifreyle girer)</span></label>
+                    </div>
                     <button type="submit" class="btn btn-primary w-100 mt-2"><i class="bi bi-save"></i> Kaydet</button>
                 </form>
             </div>
@@ -204,6 +208,25 @@
         </div>
 
         <div class="card mt-3">
+            <div class="card-header"><i class="bi bi-shield-lock"></i> Yönetici Şifresi</div>
+            <div class="card-body">
+                <p class="text-muted small">Şifreli giriş açıkken yönetici girişi için şifre gerekir. Şifre belirlemezseniz şifresiz giriş yapabilirsiniz.</p>
+                <div class="mb-2">
+                    <label class="form-label">Yeni Şifre</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="En az 4 karakter" minlength="4">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Şifre Tekrar</label>
+                    <input type="password" id="adminPasswordConfirm" class="form-control" placeholder="Tekrar girin">
+                </div>
+                <div id="adminPwResult" class="small mb-2"></div>
+                <button class="btn btn-outline-primary w-100" onclick="setAdminPassword()">
+                    <i class="bi bi-check-lg"></i> Şifreyi Belirle / Değiştir
+                </button>
+            </div>
+        </div>
+
+        <div class="card mt-3">
             <div class="card-header"><i class="bi bi-brush"></i> Logo</div>
             <div class="card-body text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" style="width:80px;height:80px;margin:0 auto;">
@@ -252,6 +275,33 @@
 </div>
 
 <script>
+function setAdminPassword() {
+    var pw = document.getElementById('adminPassword').value;
+    var confirm = document.getElementById('adminPasswordConfirm').value;
+    var result = document.getElementById('adminPwResult');
+    if (!pw || pw.length < 4) { result.innerHTML = '<span class="text-danger">Şifre en az 4 karakter olmalıdır</span>'; return; }
+    if (pw !== confirm) { result.innerHTML = '<span class="text-danger">Şifreler eşleşmiyor</span>'; return; }
+    var btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kaydediliyor...';
+    var formData = new FormData();
+    formData.append('password', pw);
+    formData.append('confirm', confirm);
+    fetch('{{ url_for("settings.set_admin_password") }}', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                result.innerHTML = '<span class="text-success">' + d.message + '</span>';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPasswordConfirm').value = '';
+            } else {
+                result.innerHTML = '<span class="text-danger">' + (d.error || 'Hata') + '</span>';
+            }
+        })
+        .catch(function() { result.innerHTML = '<span class="text-danger">Bağlantı hatası</span>'; })
+        .finally(function() { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Şifreyi Belirle / Değiştir'; });
+}
+
 function checkUpdate() {
     var statusEl = document.getElementById('updateStatus');
     var actionsEl = document.getElementById('updateActions');

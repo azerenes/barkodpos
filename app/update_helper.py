@@ -1,6 +1,6 @@
 import os, sys, json, urllib.request, urllib.error, zipfile, tempfile, shutil, subprocess, ssl
 
-CURRENT_VERSION = '1.8.1'
+CURRENT_VERSION = '1.9.0'
 GITHUB_OWNER = 'azerenes'
 GITHUB_REPO = 'BarkodPOS'
 
@@ -9,13 +9,36 @@ def get_app_dir():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+def _make_context():
+    try:
+        return ssl.create_default_context()
+    except Exception:
+        ctx = ssl._create_unverified_context()
+        return ctx
+
+def _fetch_json(url, timeout=15):
+    proxy_handler = urllib.request.ProxyHandler()
+    proxy_support = urllib.request.build_opener(proxy_handler)
+    for scheme in ('https', 'http'):
+        env_var = f'{scheme}_proxy'.upper()
+        val = os.environ.get(env_var) or os.environ.get(env_var.lower())
+        if val:
+            proxy_handler.proxies[scheme] = val
+    ctx = _make_context()
+    req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
+    return json.loads(proxy_support.open(req, context=ctx, timeout=timeout).read())
+
 def check_update():
-    ctx = ssl.create_default_context()
     url = f'https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest'
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
-        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
-            data = json.loads(resp.read())
+        data = _fetch_json(url)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'error': 'Güncelleme sunucusu bulunamadı. GitHub\'da sürüm yayını bulunmuyor.'}
+        return {'error': f'Sunucu hatası (HTTP {e.code})'}
+    except urllib.error.URLError as e:
+        reason = str(e.reason) if hasattr(e, 'reason') else str(e)
+        return {'error': f'GitHub\'a bağlanılamadı. İnternet bağlantınızı, proxy ayarlarınızı veya VPN\'inizi kontrol edin. ({reason})'}
     except Exception as e:
         return {'error': f'GitHub\'a bağlanılamadı: {str(e)}'}
 
@@ -49,6 +72,24 @@ def _compare_versions(v1, v2):
             return a - b
     return len(parts1) - len(parts2)
 
+def _download_file(url, dest):
+    proxy_handler = urllib.request.ProxyHandler()
+    proxy_support = urllib.request.build_opener(proxy_handler)
+    for scheme in ('https', 'http'):
+        env_var = f'{scheme}_proxy'.upper()
+        val = os.environ.get(env_var) or os.environ.get(env_var.lower())
+        if val:
+            proxy_handler.proxies[scheme] = val
+    ctx = _make_context()
+    req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
+    with proxy_support.open(req, context=ctx, timeout=120) as resp:
+        with open(dest, 'wb') as f:
+            while True:
+                chunk = resp.read(8192)
+                if not chunk:
+                    break
+                f.write(chunk)
+
 def download_and_apply(info):
     url = info.get('download_url')
     if not url:
@@ -58,20 +99,16 @@ def download_and_apply(info):
     zip_path = os.path.join(tmp, 'update.zip')
 
     try:
-        ctx = ssl.create_default_context()
-        req = urllib.request.Request(url, headers={'User-Agent': 'BarkodPOS'})
-        with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:
-            total = int(resp.headers.get('Content-Length', 0))
-            downloaded = 0
-            with open(zip_path, 'wb') as f:
-                while True:
-                    chunk = resp.read(8192)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    downloaded += len(chunk)
+        _download_file(url, zip_path)
+    except urllib.error.URLError as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        reason = str(e.reason) if hasattr(e, 'reason') else str(e)
+        return {'error': f'İndirme hatası (bağlantı): {reason}'}
     except Exception as e:
         shutil.rmtree(tmp, ignore_errors=True)
+        es = str(e).lower() if str(e) else ''
+        if 'certificate' in es or 'cert' in es:
+            return {'error': 'SSL sertifika hatası — lütfen Windows güncellemelerini kontrol edin veya antivirüs/proxy ayarlarınıza bakın'}
         return {'error': f'İndirme hatası: {str(e)}'}
 
     extract_dir = os.path.join(tmp, 'extracted')

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Sale
 from app import db
 from datetime import datetime
@@ -8,6 +8,7 @@ cash_bp = Blueprint('cash', __name__, url_prefix='/cash')
 
 @cash_bp.route('/')
 @login_required
+@require_permission('cash')
 def cash_register():
     today = datetime.now().date()
     today_sales = Sale.query.filter(

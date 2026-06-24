@@ -29,18 +29,24 @@
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         {% for msg in messages %}
-        <div class="alert alert-danger">{{ msg }}</div>
+        <div class="alert alert-{{ 'danger' if 'Hata' in msg or 'hatal' in msg or 'Hen' in msg else 'warning' }}">{{ msg }}</div>
         {% endfor %}
         {% endif %}
         {% endwith %}
-        <form method="POST">
+        <form method="POST" id="loginForm">
             <div class="mb-3">
-                <select name="user_id" class="form-select form-select-lg" required>
+                <select name="user_id" id="userSelect" class="form-select form-select-lg" required onchange="checkPassword()">
                     <option value="">-- Personel Seçin --</option>
                     {% for u in users %}
                     <option value="{{ u.id }}">{{ u.full_name or u.username }}{% if u.role == 'admin' %} (Yönetici){% endif %}</option>
                     {% endfor %}
                 </select>
+            </div>
+            <div class="mb-3" id="passwordGroup" style="display:none;">
+                <input type="password" name="password" id="passwordInput" class="form-control form-control-lg" placeholder="Şifre" autocomplete="off">
+            </div>
+            <div class="mb-2" id="noPasswordInfo" style="display:none;">
+                <small class="text-muted">Bu kullanıcının henüz şifresi yok, giriş yapınca belirleyebilirsiniz.</small>
             </div>
             <button type="submit" class="btn btn-primary btn-lg w-100">
                 <i class="bi bi-box-arrow-in-right"></i> Giriş
@@ -48,5 +54,32 @@
         </form>
     </div>
     <script src="{{ url_for('static', filename='lib/bootstrap.bundle.min.js') }}"></script>
+    <script>
+    function checkPassword() {
+        var userId = document.getElementById('userSelect').value;
+        var pwGroup = document.getElementById('passwordGroup');
+        var noPwInfo = document.getElementById('noPasswordInfo');
+        if (!userId) {
+            pwGroup.style.display = 'none';
+            noPwInfo.style.display = 'none';
+            return;
+        }
+        fetch('/auth/check-password/' + userId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.exists) {
+                    pwGroup.style.display = 'block';
+                    noPwInfo.style.display = 'none';
+                } else {
+                    pwGroup.style.display = 'none';
+                    noPwInfo.style.display = 'block';
+                }
+            })
+            .catch(function() {
+                pwGroup.style.display = 'none';
+                noPwInfo.style.display = 'none';
+            });
+    }
+    </script>
 </body>
 </html>

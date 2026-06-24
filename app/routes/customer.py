@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Customer, Payment, Sale
 from app import db
 
@@ -7,6 +7,7 @@ customer_bp = Blueprint('customer', __name__, url_prefix='/customer')
 
 @customer_bp.route('/')
 @login_required
+@require_permission('customer')
 def customer_list():
     page = request.args.get('page', 1, type=int)
     per_page = 50
@@ -20,6 +21,7 @@ def customer_list():
 
 @customer_bp.route('/add', methods=['POST'])
 @login_required
+@require_permission('customer')
 def add_customer():
     name = request.form.get('name', '').strip()
     if not name:
@@ -45,6 +47,7 @@ def add_customer():
 
 @customer_bp.route('/detail/<int:id>')
 @login_required
+@require_permission('customer')
 def customer_detail(id):
     customer = Customer.query.get_or_404(id)
     payments = Payment.query.filter_by(customer_id=customer.id).order_by(Payment.created_at.desc()).all()
@@ -53,6 +56,7 @@ def customer_detail(id):
 
 @customer_bp.route('/payment/<int:id>', methods=['POST'])
 @login_required
+@require_permission('customer')
 def add_payment(id):
     customer = Customer.query.get_or_404(id)
     try:
@@ -97,6 +101,7 @@ def add_payment(id):
 
 @customer_bp.route('/extract/<int:id>')
 @login_required
+@require_permission('customer')
 def extract(id):
     customer = Customer.query.get_or_404(id)
     sales = Sale.query.filter_by(customer_id=id, status='completed').order_by(Sale.created_at.desc()).all()
@@ -105,6 +110,7 @@ def extract(id):
 
 @customer_bp.route('/extract/<int:id>/json')
 @login_required
+@require_permission('customer')
 def extract_json(id):
     customer = Customer.query.get_or_404(id)
     sales = Sale.query.filter_by(customer_id=id, status='completed').order_by(Sale.created_at).all()

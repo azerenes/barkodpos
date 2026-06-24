@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Category, StockMovement
 from app import db
 from datetime import datetime
@@ -8,6 +8,7 @@ purchase_bp = Blueprint('purchase', __name__, url_prefix='/purchase')
 
 @purchase_bp.route('/')
 @login_required
+@require_permission('purchase')
 def purchase():
     products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
     categories = Category.query.order_by(Category.name).all()
@@ -18,6 +19,7 @@ def purchase():
 
 @purchase_bp.route('/add-stock', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def add_stock():
     product_id = request.form.get('product_id')
     if not product_id:
@@ -62,6 +64,7 @@ def add_stock():
 
 @purchase_bp.route('/remove-stock', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def remove_stock():
     product_id = request.form.get('product_id')
     if not product_id:
@@ -116,12 +119,14 @@ def log_price_history(product_id, price_type, old_price, new_price, notes=''):
 
 @purchase_bp.route('/history')
 @login_required
+@require_permission('purchase')
 def history():
     movements = StockMovement.query.order_by(StockMovement.created_at.desc()).limit(100).all()
     return render_template('purchase_history.html', movements=movements)
 
 @purchase_bp.route('/invoices')
 @login_required
+@require_permission('purchase')
 def invoice_list():
     from app.models import PurchaseInvoice
     invoices = PurchaseInvoice.query.order_by(PurchaseInvoice.created_at.desc()).all()
@@ -129,6 +134,7 @@ def invoice_list():
 
 @purchase_bp.route('/invoices/new', methods=['GET', 'POST'])
 @login_required
+@require_permission('purchase')
 def invoice_new():
     from app.models import PurchaseInvoice, PurchaseInvoiceItem, Supplier
     if request.method == 'POST':
@@ -192,6 +198,7 @@ def invoice_new():
 
 @purchase_bp.route('/invoices/<int:id>')
 @login_required
+@require_permission('purchase')
 def invoice_detail(id):
     from app.models import PurchaseInvoice
     invoice = PurchaseInvoice.query.get_or_404(id)
@@ -199,6 +206,7 @@ def invoice_detail(id):
 
 @purchase_bp.route('/invoices/<int:id>/delete', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def invoice_delete(id):
     from app.models import PurchaseInvoice, PurchaseInvoiceItem
     invoice = PurchaseInvoice.query.get_or_404(id)

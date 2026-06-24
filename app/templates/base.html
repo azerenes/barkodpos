@@ -31,11 +31,14 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    {% if current_user_is_admin or 'pos' in current_user_permissions %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('pos.pos') }}">
                             <i class="bi bi-cart"></i> POS
                         </a>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'stock' in current_user_permissions %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-box"></i> Stok
@@ -49,6 +52,8 @@
                             <li><a class="dropdown-item" href="{{ url_for('stock_count.index') }}">Stok Sayımı</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'purchase' in current_user_permissions %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('supplier.supplier_list') }}">
                             <i class="bi bi-truck"></i> Tedarikçi
@@ -63,11 +68,15 @@
                             <li><a class="dropdown-item" href="{{ url_for('purchase.invoice_list') }}">Alış Faturaları</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'customer' in current_user_permissions %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('customer.customer_list') }}">
                             <i class="bi bi-people"></i> Cari
                         </a>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'cash' in current_user_permissions %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-safe"></i> Kasa
@@ -77,16 +86,21 @@
                             <li><a class="dropdown-item" href="{{ url_for('cashreg.index') }}">Açılış/Kapanış</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'expense' in current_user_permissions %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('expense.expense_list') }}">
                             <i class="bi bi-wallet2"></i> Gider
                         </a>
                     </li>
+                    {% endif %}
+                    {% if current_user_is_admin or 'report' in current_user_permissions %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('report.reports') }}">
                             <i class="bi bi-bar-chart"></i> Rapor
                         </a>
                     </li>
+                    {% endif %}
                     {% if current_user_is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('employee.employee_list') }}">

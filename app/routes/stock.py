@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Category, StockMovement, Supplier, PriceHistory, ProductPrice, RecipeItem
 from app import db
 from sqlalchemy import or_
@@ -9,6 +9,7 @@ stock_bp = Blueprint('stock', __name__, url_prefix='/stock')
 
 @stock_bp.route('/')
 @login_required
+@require_permission('stock')
 def stock_list():
     page = request.args.get('page', 1, type=int)
     per_page = 50
@@ -27,6 +28,7 @@ def stock_list():
 
 @stock_bp.route('/add', methods=['POST'])
 @login_required
+@require_permission('stock')
 def add_product():
     barcode = request.form.get('barcode', '').strip()
     name = request.form.get('name', '').strip()
@@ -49,7 +51,7 @@ def add_product():
         flash('Satış fiyatı sıfırdan büyük olmalıdır', 'error')
         return redirect(url_for('stock.stock_list'))
 
-    existing = Product.query.filter_by(barcode=barcode).first()
+    existing = Product.query.filter_by(barcode=barcode, is_active=True).first()
     if existing:
         flash('Bu barkod zaten kayıtlı', 'error')
         return redirect(url_for('stock.stock_list'))
@@ -84,6 +86,7 @@ def add_product():
 
 @stock_bp.route('/update/<int:id>', methods=['POST'])
 @login_required
+@require_permission('stock')
 def update_product(id):
     product = Product.query.get_or_404(id)
     name = request.form.get('name', '').strip()
@@ -129,6 +132,7 @@ def update_product(id):
 
 @stock_bp.route('/stock-entry/<int:id>', methods=['POST'])
 @login_required
+@require_permission('stock')
 def stock_entry(id):
     product = Product.query.get_or_404(id)
     try:
@@ -156,14 +160,50 @@ def stock_entry(id):
 
     return redirect(url_for('stock.stock_list'))
 
+@stock_bp.route('/update-stock/<int:id>', methods=['POST'])
+@login_required
+@require_permission('stock')
+def update_stock(id):
+    product = Product.query.get_or_404(id)
+    try:
+        new_qty = float(request.form.get('stock_qty', 0) or 0)
+    except ValueError:
+        flash('Geçersiz miktar', 'error')
+        return redirect(url_for('stock.stock_list'))
+
+    if new_qty < 0:
+        flash('Miktar negatif olamaz', 'error')
+        return redirect(url_for('stock.stock_list'))
+
+    try:
+        old_qty = float(product.stock_qty)
+        diff = round(new_qty - old_qty, 2)
+        product.stock_qty = new_qty
+        if diff != 0:
+            movement_type = 'entry' if diff > 0 else 'exit'
+            db.session.add(StockMovement(
+                product_id=product.id, user_id=get_user_id(),
+                branch_id=get_branch_id(), type=movement_type,
+                quantity=abs(diff), description='Stok düzeltme'
+            ))
+        db.session.commit()
+        flash(f'Stok düzeltildi: {old_qty} → {new_qty}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Hata: {str(e)}', 'error')
+
+    return redirect(url_for('stock.stock_list'))
+
 @stock_bp.route('/categories')
 @login_required
+@require_permission('stock')
 def categories():
     categories = Category.query.order_by(Category.name).all()
     return render_template('categories.html', categories=categories)
 
 @stock_bp.route('/add-category', methods=['POST'])
 @login_required
+@require_permission('stock')
 def add_category():
     name = request.form.get('name', '').strip()
     if not name:
@@ -186,6 +226,7 @@ def add_category():
 
 @stock_bp.route('/labels')
 @login_required
+@require_permission('stock')
 def product_labels():
     page = request.args.get('page', 1, type=int)
     per_page = 50
@@ -199,6 +240,7 @@ def product_labels():
 
 @stock_bp.route('/csv-import', methods=['POST'])
 @login_required
+@require_permission('stock')
 def csv_import():
     import csv, io
     file = request.files.get('file')
@@ -214,7 +256,7 @@ def csv_import():
             name = row.get('name', '').strip() or row.get('Ürün Adı', '').strip()
             if not barcode or not name:
                 continue
-            existing = Product.query.filter_by(barcode=barcode).first()
+            existing = Product.query.filter_by(barcode=barcode, is_active=True).first()
             if existing:
                 existing.stock_qty = float(existing.stock_qty or 0) + float(row.get('stock_qty', 0) or row.get('Stok', 0) or 0)
                 existing.sale_price = float(row.get('sale_price', 0) or row.get('Satış Fiyatı', 0) or existing.sale_price or 0)
@@ -260,6 +302,7 @@ def csv_import():
 
 @stock_bp.route('/price-history')
 @login_required
+@require_permission('stock')
 def price_history():
     product_id = request.args.get('product_id', type=int)
     query = PriceHistory.query.order_by(PriceHistory.created_at.desc())
@@ -271,6 +314,7 @@ def price_history():
 
 @stock_bp.route('/price-history/<int:product_id>')
 @login_required
+@require_permission('stock')
 def price_history_json(product_id):
     history = PriceHistory.query.filter_by(product_id=product_id).order_by(PriceHistory.created_at.desc()).all()
     return jsonify([{
@@ -282,6 +326,7 @@ def price_history_json(product_id):
 
 @stock_bp.route('/prices/<int:product_id>', methods=['GET', 'POST'])
 @login_required
+@require_permission('stock')
 def manage_prices(product_id):
     product = Product.query.get_or_404(product_id)
     if request.method == 'POST':
@@ -309,12 +354,14 @@ def manage_prices(product_id):
 
 @stock_bp.route('/set-products')
 @login_required
+@require_permission('stock')
 def set_products():
     sets = Product.query.filter_by(is_set=True, is_active=True).order_by(Product.name).all()
     return render_template('set_products.html', sets=sets)
 
 @stock_bp.route('/set-products/new', methods=['GET', 'POST'])
 @login_required
+@require_permission('stock')
 def set_product_new():
     if request.method == 'POST':
         try:
@@ -356,6 +403,7 @@ def set_product_new():
 
 @stock_bp.route('/set-products/<int:id>')
 @login_required
+@require_permission('stock')
 def set_product_detail(id):
     set_prod = Product.query.get_or_404(id)
     components = RecipeItem.query.filter_by(product_id=id).all()
@@ -363,6 +411,7 @@ def set_product_detail(id):
 
 @stock_bp.route('/set-products/<int:id>/unpack', methods=['POST'])
 @login_required
+@require_permission('stock')
 def set_product_unpack(id):
     set_prod = Product.query.get_or_404(id)
     if not set_prod.is_set:
@@ -386,6 +435,7 @@ def set_product_unpack(id):
 
 @stock_bp.route('/export-csv')
 @login_required
+@require_permission('stock')
 def export_stock_csv():
     query = Product.query.filter_by(is_active=True).order_by(Product.name)
     search = request.args.get('q', '').strip()
@@ -417,6 +467,7 @@ def export_stock_csv():
 
 @stock_bp.route('/toggle-quick/<int:id>', methods=['POST'])
 @login_required
+@require_permission('stock')
 def toggle_quick(id):
     product = Product.query.get(id)
     if not product:
@@ -427,6 +478,7 @@ def toggle_quick(id):
 
 @stock_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
+@require_permission('stock')
 def delete_product(id):
     import shutil, os
     from config import get_data_dir
@@ -448,6 +500,7 @@ def delete_product(id):
 
 @stock_bp.route('/add-category-ajax', methods=['POST'])
 @login_required
+@require_permission('stock')
 def add_category_ajax():
     name = request.form.get('name', '').strip()
     if not name:

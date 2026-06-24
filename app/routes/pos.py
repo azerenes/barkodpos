@@ -1,7 +1,7 @@
 import threading, random, re
 from urllib.parse import unquote
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Sale, SaleItem, Customer, StockMovement, Category
 from app import db
 from datetime import datetime
@@ -11,6 +11,7 @@ _sale_lock = threading.Lock()
 
 @pos_bp.route('/')
 @login_required
+@require_permission('pos')
 def pos():
     customers = Customer.query.order_by(Customer.name).all()
     products = Product.query.filter_by(is_active=True).order_by(Product.name).limit(30).all()
@@ -25,6 +26,7 @@ def pos():
 
 @pos_bp.route('/search-product')
 @login_required
+@require_permission('pos')
 def search_product():
     q = request.args.get('q', '').strip()
     query = Product.query.filter_by(is_active=True)
@@ -41,6 +43,7 @@ def search_product():
 
 @pos_bp.route('/quick-sale', methods=['POST'])
 @login_required
+@require_permission('pos')
 def quick_sale():
     from datetime import datetime
     from app import db
@@ -59,7 +62,7 @@ def quick_sale():
         from app.models import Product, Category
 
         if barcode_input:
-            existing = Product.query.filter_by(barcode=barcode_input).first()
+            existing = Product.query.filter_by(barcode=barcode_input, is_active=True).first()
             if existing:
                 return jsonify({
                     'id': existing.id, 'barcode': existing.barcode,
@@ -112,6 +115,7 @@ def quick_sale():
 
 @pos_bp.route('/add-product', methods=['POST'])
 @login_required
+@require_permission('pos')
 def add_product():
     try:
         data = request.get_json()
@@ -127,7 +131,7 @@ def add_product():
         if price <= 0:
             return jsonify({'error': 'Geçersiz fiyat'}), 400
 
-        existing = Product.query.filter_by(barcode=barcode).first()
+        existing = Product.query.filter_by(barcode=barcode, is_active=True).first()
         if existing:
             return jsonify({
                 'id': existing.id, 'barcode': existing.barcode,
@@ -173,6 +177,7 @@ def add_product():
 
 @pos_bp.route('/recent-sales')
 @login_required
+@require_permission('pos')
 def recent_sales():
     sales = Sale.query.filter_by(status='completed').order_by(Sale.created_at.desc()).limit(50).all()
     result = []
@@ -191,6 +196,7 @@ def recent_sales():
 
 @pos_bp.route('/sale-detail/<int:sale_id>')
 @login_required
+@require_permission('pos')
 def sale_detail(sale_id):
     sale = Sale.query.get(sale_id)
     if not sale:
@@ -210,6 +216,7 @@ def sale_detail(sale_id):
 
 @pos_bp.route('/complete-sale', methods=['POST'])
 @login_required
+@require_permission('pos')
 def complete_sale():
     with _sale_lock:
         try:
@@ -323,6 +330,7 @@ def complete_sale():
 
 @pos_bp.route('/send-pos', methods=['POST'])
 @login_required
+@require_permission('pos')
 def send_pos():
     data = request.get_json() or {}
     amount = round(float(data.get('amount', 0)), 2)
@@ -340,6 +348,7 @@ def send_pos():
 
 @pos_bp.route('/return', methods=['POST'])
 @login_required
+@require_permission('pos')
 def return_sale():
     with _sale_lock:
         try:

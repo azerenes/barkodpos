@@ -9,7 +9,7 @@
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead>
-                <tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Şube</th><th>Durum</th></tr>
+                <tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Şube</th><th>Yetkiler</th><th>Durum</th><th></th></tr>
             </thead>
             <tbody>
                 {% for e in employees %}
@@ -17,10 +17,23 @@
                     <td>{{ e.username }}</td>
                     <td>{{ e.full_name or '-' }}</td>
                     <td>{{ e.branch.name if e.branch else '-' }}</td>
+                    <td>
+                        {% if e.permissions %}
+                            {% for p in e.permissions.split(',') %}
+                                <span class="badge bg-info me-1">{{ permission_labels.get(p, p) }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">Yetki yok</span>
+                        {% endif %}
+                    </td>
                     <td><span class="badge bg-{{ 'success' if e.is_active else 'danger' }}">{{ 'Aktif' if e.is_active else 'Pasif' }}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="editPermissions({{ e.id }}, '{{ e.username }}', '{{ e.full_name or '' }}', '{{ e.permissions or '' }}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="resetPassword({{ e.id }}, '{{ e.full_name or e.username }}')"><i class="bi bi-key"></i></button>
+                    </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="text-center text-muted">Personel yok</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">Personel yok</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -43,6 +56,18 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="mb-2"><label>Yetkiler</label>
+                        <div class="row">
+                            {% for p in all_permissions %}
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="perm_{{ p }}" id="new_{{ p }}" checked>
+                                    <label class="form-check-label" for="new_{{ p }}">{{ permission_labels.get(p, p) }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Ekle</button>
@@ -51,4 +76,54 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="editPermissionModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="permForm" method="POST" action="{{ url_for('employee.update_permissions') }}">
+                <div class="modal-header"><h5>Yetki Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="mb-2" id="editPermUser"></p>
+                    <input type="hidden" name="user_id" id="editPermUserId">
+                    <div class="row">
+                        {% for p in all_permissions %}
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="perm_{{ p }}" id="edit_{{ p }}">
+                                <label class="form-check-label" for="edit_{{ p }}">{{ permission_labels.get(p, p) }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editPermissions(id, username, fullName, perms) {
+    document.getElementById('editPermUserId').value = id;
+    document.getElementById('editPermUser').textContent = fullName || username;
+    var list = perms ? perms.split(',') : [];
+    {% for p in all_permissions %}
+    document.getElementById('edit_{{ p }}').checked = list.includes('{{ p }}');
+    {% endfor %}
+    new bootstrap.Modal(document.getElementById('editPermissionModal')).show();
+}
+
+function resetPassword(id, name) {
+    if (!confirm(name + ' şifresini sıfırlamak istediğinize emin misiniz?\nPersonel bir sonraki girişte yeni şifre belirleyecek.')) return;
+    fetch('/employee/reset-password/' + id, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) { alert(d.message); location.reload(); }
+            else { alert('Hata: ' + (d.error || '')); }
+        })
+        .catch(function() { alert('Sıfırlama hatası'); });
+}
+</script>
 {% endblock %}

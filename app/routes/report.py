@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, Response
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Sale, SaleItem, Product, Expense, StockMovement, SavedReport
 from app import db
 from datetime import datetime, timedelta
@@ -128,6 +128,7 @@ def build_daily_breakdown(start_date, end_date):
 
 @report_bp.route('/')
 @login_required
+@require_permission('report')
 def reports():
     period = request.args.get('period', 'today')
     start_date, end_date = get_period_range(period)
@@ -141,6 +142,7 @@ def reports():
 
 @report_bp.route('/save-report', methods=['POST'])
 @login_required
+@require_permission('report')
 def save_report():
     if not is_admin():
         return jsonify({'error': 'Yetkiniz yok'}), 403
@@ -177,6 +179,7 @@ def save_report():
 
 @report_bp.route('/saved-reports')
 @login_required
+@require_permission('report')
 def list_saved_reports():
     reports = SavedReport.query.order_by(SavedReport.created_at.desc()).all()
     result = []
@@ -192,6 +195,7 @@ def list_saved_reports():
 
 @report_bp.route('/delete-report/<int:report_id>', methods=['POST'])
 @login_required
+@require_permission('report')
 def delete_report(report_id):
     if not is_admin():
         return jsonify({'error': 'Yetkiniz yok'}), 403
@@ -202,6 +206,7 @@ def delete_report(report_id):
 
 @report_bp.route('/reset-sales', methods=['POST'])
 @login_required
+@require_permission('report')
 def reset_sales():
     if not is_admin():
         return jsonify({'error': 'Yetkiniz yok'}), 403
@@ -246,6 +251,7 @@ def reset_sales():
 
 @report_bp.route('/weekly-data')
 @login_required
+@require_permission('report')
 def weekly_data():
     today = datetime.now().date()
     days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
@@ -263,6 +269,7 @@ def weekly_data():
 
 @report_bp.route('/payment-data')
 @login_required
+@require_permission('report')
 def payment_data():
     today = datetime.now().date()
     cash = db.session.query(db.func.sum(Sale.grand_total)).filter(
@@ -275,6 +282,7 @@ def payment_data():
 
 @report_bp.route('/export-csv')
 @login_required
+@require_permission('report')
 def export_report_csv():
     period = request.args.get('period', 'today')
     start_date, end_date = get_period_range(period)

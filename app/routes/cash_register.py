@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from app.auth_helper import login_required, get_user_id, get_branch_id
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id
 from app.models import CashRegister
 from app import db
 from datetime import datetime
@@ -8,6 +8,7 @@ cashreg_bp = Blueprint('cashreg', __name__, url_prefix='/cash-register')
 
 @cashreg_bp.route('/')
 @login_required
+@require_permission('cash')
 def index():
     open_reg = CashRegister.query.filter_by(status='open', branch_id=get_branch_id()).first()
     registers = CashRegister.query.filter_by(branch_id=get_branch_id()).order_by(CashRegister.opened_at.desc()).limit(30).all()
@@ -15,6 +16,7 @@ def index():
 
 @cashreg_bp.route('/open', methods=['POST'])
 @login_required
+@require_permission('cash')
 def open_register():
     existing = CashRegister.query.filter_by(status='open', branch_id=get_branch_id()).first()
     if existing:
@@ -37,6 +39,7 @@ def open_register():
 
 @cashreg_bp.route('/close', methods=['POST'])
 @login_required
+@require_permission('cash')
 def close_register():
     reg = CashRegister.query.filter_by(status='open', branch_id=get_branch_id()).first()
     if not reg:
@@ -66,6 +69,7 @@ def close_register():
 
 @cashreg_bp.route('/detail/<int:id>')
 @login_required
+@require_permission('cash')
 def detail(id):
     reg = CashRegister.query.get_or_404(id)
     return render_template('cash_register_detail.html', reg=reg)

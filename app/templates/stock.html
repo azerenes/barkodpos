@@ -63,7 +63,9 @@
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#editModal{{ p.id }}"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
-                                data-bs-target="#stockEntryModal{{ p.id }}"><i class="bi bi-plus-circle"></i></button>
+                                 data-bs-target="#stockEntryModal{{ p.id }}"><i class="bi bi-plus-circle"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                 data-bs-target="#stockEditModal{{ p.id }}" title="Stok Düzenle"><i class="bi bi-pencil-square"></i></button>
                         <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ p.id }})" title="Sil"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
@@ -270,6 +272,23 @@
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Stok Girişi Yap</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stockEditModal{{ p.id }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('stock.update_stock', id=p.id) }}">
+                <div class="modal-header"><h5>Stok Düzenle - {{ p.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="text-muted small">Mevcut stok: <strong>{{ p.stock_qty }}</strong></p>
+                    <div class="mb-2"><label>Yeni Stok Miktarı</label><input type="number" name="stock_qty" class="form-control" value="{{ p.stock_qty }}" step="0.01" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
                 </div>
             </form>
         </div>

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Supplier
 from app import db
 
@@ -7,6 +7,7 @@ supplier_bp = Blueprint('supplier', __name__, url_prefix='/supplier')
 
 @supplier_bp.route('/')
 @login_required
+@require_permission('purchase')
 def supplier_list():
     page = request.args.get('page', 1, type=int)
     per_page = 50
@@ -20,6 +21,7 @@ def supplier_list():
 
 @supplier_bp.route('/add', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def add_supplier():
     name = request.form.get('name', '').strip()
     if not name:
@@ -46,6 +48,7 @@ def add_supplier():
 
 @supplier_bp.route('/update/<int:id>', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def update_supplier(id):
     supplier = Supplier.query.get_or_404(id)
     name = request.form.get('name', '').strip()
@@ -70,6 +73,7 @@ def update_supplier(id):
 
 @supplier_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
+@require_permission('purchase')
 def delete_supplier(id):
     supplier = Supplier.query.get_or_404(id)
     try:

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from app.auth_helper import login_required, get_user_id, get_branch_id, is_admin, get_user_name
+from app.auth_helper import login_required, require_permission, get_user_id, get_branch_id, is_admin, get_user_name
 from app.models import Product, Branch, StockMovement
 from app import db
 
@@ -7,10 +7,8 @@ transfer_bp = Blueprint('transfer', __name__, url_prefix='/transfer')
 
 @transfer_bp.route('/')
 @login_required
+@require_permission('stock')
 def transfer():
-    if not is_admin():
-        flash('Bu sayfaya erişim yetkiniz yok', 'error')
-        return redirect(url_for('main.dashboard'))
     products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
     branches = Branch.query.all()
     movements = StockMovement.query.filter(
@@ -20,11 +18,8 @@ def transfer():
 
 @transfer_bp.route('/do-transfer', methods=['POST'])
 @login_required
+@require_permission('stock')
 def do_transfer():
-    if not is_admin():
-        flash('Yetkiniz yok', 'error')
-        return redirect(url_for('main.dashboard'))
-
     product_id = request.form.get('product_id')
     from_branch_id = request.form.get('from_branch_id')
     to_branch_id = request.form.get('to_branch_id')
